@@ -1488,17 +1488,17 @@ async function runExerciseSuggestion(day){
 
   const prompt = `I train at a regular commercial gym, 44 years old, moderate experience, currently ~${latestWeightKg}kg.
 
-Today's focus: "${day.title}". The exercises planned for this day are: ${currentList}.
+Today's focus: "${day.title}". The exercises ALREADY on my board for today are: ${currentList}.
 
 What I've actually completed TODAY so far:
 ${todayDone}
 My training history over the last 14 days:
 ${history}
-Based on all of the above, suggest 5 exercises for today. Prioritize:
+Suggest 5 exercises for today that are DIFFERENT from the ones already on my board listed above — do not repeat any exercise name that's already there, even if it would otherwise be a good fit. These should be genuinely new options I could swap in or add. Prioritize:
 1. Muscle groups or movements I've been neglecting recently (check the history).
 2. Balance within today's session — if I've already hit certain movements hard today, suggest complements rather than repeats.
 3. Recovery awareness — avoid suggesting heavy work for muscle groups trained intensely in the last 1-2 days.
-For each, give the exercise name and one short sentence explaining WHY based on my actual data (e.g. "you haven't trained legs in 9 days" or "complements the pressing you did today").
+For each, give the exercise name and one short sentence explaining WHY based on my actual data (e.g. "you haven't trained legs in 9 days" or "complements the pressing you did today"). If there's genuinely no training history yet, just give solid variety for "${day.title}" not already on the board.
 
 Respond with ONLY a raw JSON array, no markdown fences, no other text, in exactly this shape:
 [{"name":"Exercise Name","reason":"one short data-driven sentence"}]`;
@@ -1526,7 +1526,15 @@ Respond with ONLY a raw JSON array, no markdown fences, no other text, in exactl
     let parsed;
     try{ parsed = JSON.parse(cleaned); }catch(e){ parsed = null; }
     if(Array.isArray(parsed) && parsed.length){
-      cachedSuggestions[day.key] = parsed;
+      const existingNames = new Set((isMix ? getDynamicList(day.key) : day.exercises.concat(currentExtras)).map(e=>e.name.toLowerCase()));
+      const filtered = parsed.filter(s=>s && s.name && !existingNames.has(s.name.toLowerCase()));
+      if(filtered.length===0){
+        resultEl.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">No new suggestions right now — your board already covers the sensible options for this group.</div>';
+        btn.disabled = false;
+        btn.textContent = 'Suggest exercises for ' + day.title;
+        return;
+      }
+      cachedSuggestions[day.key] = filtered;
       renderDay();
       return;
     } else {

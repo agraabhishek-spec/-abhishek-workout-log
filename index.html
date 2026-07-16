@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abhishek Agrawal — Daily Work-Out Log</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#12130f; --panel:#1a1c16; --panel2:#20221b;
+    --steel:#8a8f7c; --brass:#c99a4a; --brass-dim:#8a6b34;
+    --text:#e9e6da; --text-dim:#9a9a8c; --line:#33352a; --ok:#7fae6a; --danger:#c96a4a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI', Roboto, -apple-system, sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--brass-dim);padding-bottom:14px;margin-bottom:18px;}
+  header .brand{font-family:Georgia, 'Times New Roman', serif;font-size:22px;letter-spacing:0.5px;color:var(--brass);line-height:1.2;}
+  header .brand span{color:var(--text-dim);font-size:13px;display:block;font-family:'Segoe UI',sans-serif;letter-spacing:2px;margin-top:2px;}
+  header .stat{text-align:right;font-size:12px;color:var(--text-dim);}
+  header .stat b{color:var(--text);font-size:16px;display:block;}
+
+  .section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:16px;}
+  .sectitle{font-size:12px;letter-spacing:2px;color:var(--brass);text-transform:uppercase;margin-bottom:12px;}
+  .dashgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:4px;}
+  .dashcard{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:12px;text-align:center;}
+  .dashval{font-size:20px;font-weight:700;color:var(--brass);}
+  .dashlabel{font-size:11px;color:var(--text-dim);margin-top:2px;}
+
+  /* weight tracker */
+  .weightrow{display:flex;gap:8px;margin-bottom:10px;}
+  .weightrow input{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:9px 10px;font-size:14px;}
+  .weightrow button{background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;}
+  .weighthist{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
+  .wentry{flex:0 0 auto;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;text-align:center;min-width:70px;}
+  .wentry .wv{font-size:15px;font-weight:700;}
+  .wentry .wd{font-size:10px;color:var(--text-dim);margin-top:2px;}
+  .wdelta{font-size:11px;margin-top:8px;color:var(--text-dim);}
+  .wdelta.down{color:var(--ok);}
+  .wdelta.up{color:var(--danger);}
+
+  /* calendar */
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;max-width:320px;margin:0 auto;}
+  .calhead{font-size:9px;color:var(--text-dim);text-align:center;padding-bottom:3px;}
+  .calday{aspect-ratio:1;max-height:38px;background:var(--panel2);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--text-dim);position:relative;border:1px solid var(--line);cursor:pointer;}
+  .calday.today{border-color:var(--brass);}
+  .calday.done{background:var(--brass-dim);color:#fff;}
+  .calday .dot{width:4px;height:4px;border-radius:50%;background:var(--ok);position:absolute;bottom:3px;}
+  .calday.selected{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset;}
+  .detailcard{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:12px;}
+  .detailcard h4{margin:0 0 8px;font-size:14px;color:var(--brass);}
+  .detailex{font-size:13px;border-bottom:1px solid var(--line);padding:6px 0;}
+  .detailex b{font-weight:600;}
+  .calnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;}
+  .calnav button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:4px 10px;cursor:pointer;}
+
+  .daytabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:18px;padding-bottom:4px;}
+  .daytab{flex:0 0 auto;padding:9px 14px;border-radius:3px;background:var(--panel);border:1px solid var(--line);color:var(--text-dim);font-size:13px;cursor:pointer;white-space:nowrap;}
+  .daytab.active{background:var(--brass-dim);color:#fff;border-color:var(--brass);}
+  .daytitle{font-size:12px;letter-spacing:2px;color:var(--brass);text-transform:uppercase;margin-bottom:14px;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:12px;}
+  .card-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;}
+  .photolink{flex:0 0 auto;font-size:11px;color:var(--brass);border:1px solid var(--brass-dim);border-radius:4px;padding:6px 10px;text-decoration:none;white-space:nowrap;}
+  .photolink:hover{background:var(--panel2);}
+  .icon{width:52px;height:52px;flex:0 0 52px;background:var(--panel2);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+  .icon svg{width:40px;height:40px;stroke:var(--brass);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+  .exname{font-size:15px;font-weight:600;}
+  .extarget{font-size:12px;color:var(--text-dim);}
+
+  .sets{display:flex;flex-direction:column;gap:6px;}
+  .setrow{display:grid;grid-template-columns:34px 1fr 1fr 30px;gap:8px;align-items:center;}
+  .setrow.single{grid-template-columns:34px 1fr 30px;}
+  .setrow .setno{font-size:12px;color:var(--text-dim);}
+  .setrow input{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:7px 8px;font-size:14px;width:100%;}
+  .setrow input::placeholder{color:#5f6155;}
+  .setrow .done{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;}
+  .setrow .done.disabled{cursor:not-allowed;opacity:0.35;}
+  .setrow .done.checked{background:var(--ok);border-color:var(--ok);color:#0d1a08;}
+
+  .savebar{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding-top:16px;margin-top:6px;}
+  .savebtn{width:100%;padding:13px;background:var(--brass);color:#1a1200;border:none;border-radius:6px;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;}
+  .savemsg{text-align:center;font-size:12px;color:var(--ok);margin-top:8px;min-height:14px;}
+
+  #dayNotes{width:100%;min-height:70px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:10px;font-size:14px;font-family:inherit;resize:vertical;}
+  #dayNotes::placeholder{color:#5f6155;}
+  .photoUploadBtn{display:block;text-align:center;padding:16px;border:1px dashed var(--line);border-radius:6px;color:var(--text-dim);font-size:13px;cursor:pointer;}
+  .photoUploadBtn:hover{border-color:var(--brass-dim);color:var(--brass);}
+  #photoPreviewWrap{margin-top:10px;}
+  #photoPreview{width:100%;max-height:280px;object-fit:cover;border-radius:6px;display:block;}
+  #photoRemoveBtn{width:100%;margin-top:8px;padding:8px;background:var(--panel2);border:1px solid var(--line);color:var(--danger);border-radius:4px;cursor:pointer;font-size:12px;}
+
+  .history{margin-top:26px;}
+  .history h3{font-size:12px;letter-spacing:2px;color:var(--brass);text-transform:uppercase;margin-bottom:10px;}
+  .hitem{font-size:13px;color:var(--text-dim);border-bottom:1px solid var(--line);padding:8px 0;display:flex;justify-content:space-between;}
+  .logDel{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:6px;border-radius:50%;color:var(--danger);cursor:pointer;font-size:13px;}
+  .logDel:hover{background:var(--panel2);}
+  .wentry{position:relative;}
+  .wentry .logDel{position:absolute;top:-4px;right:-4px;width:20px;height:20px;font-size:11px;background:var(--panel);border:1px solid var(--line);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">Abhishek Agrawal<span>DAILY WORK-OUT LOG</span></div>
+    <div class="stat" id="todayStat"><b id="todayDate">—</b>today</div>
+  </header>
+
+  <div class="section">
+    <div class="sectitle">Today's workout — everything in one place</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+      <span style="font-size:12px;color:var(--text-dim);flex:1;">Daily calorie burn goal</span>
+      <input type="text" inputmode="numeric" id="calorieGoalInput" placeholder="400" style="width:80px;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:6px 8px;font-size:13px;text-align:right;">
+      <button id="calorieGoalSaveBtn" style="background:var(--panel2);border:1px solid var(--line);color:var(--brass);border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;">Set</button>
+    </div>
+    <div id="todaySummary"><div style="font-size:12px;color:var(--text-dim);">Loading…</div></div>
+    <button id="aiTodayBtn" style="width:100%;margin-top:10px;background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">Get today's AI synopsis</button>
+    <button id="downloadTodayBtn" style="width:100%;margin-top:8px;background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">Download today's log (PDF)</button>
+    <div id="downloadTodayStatus" style="text-align:center;font-size:12px;color:var(--text-dim);margin-top:6px;min-height:14px;"></div>
+
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Or download a previous day / range:</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="date" id="pdfFromDate" style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:6px;font-size:12px;">
+        <span style="color:var(--text-dim);font-size:11px;">to</span>
+        <input type="date" id="pdfToDate" style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:6px;font-size:12px;">
+        <button id="pdfRangeDownloadBtn" title="Download PDF" style="flex:0 0 auto;background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:6px 10px;font-size:16px;line-height:1;cursor:pointer;">⬇</button>
+      </div>
+      <div id="pdfRangeStatus" style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:4px;min-height:13px;"></div>
+    </div>
+    <div id="aiTodayResult" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectitle">Dashboard — last 7 days</div>
+    <div class="dashgrid" id="dashGrid">
+      <div class="dashcard"><div class="dashval" id="dashSessions">—</div><div class="dashlabel">Workouts (7d)</div></div>
+      <div class="dashcard"><div class="dashval" id="dashCardio">—</div><div class="dashlabel">Cardio min (7d)</div></div>
+      <div class="dashcard"><div class="dashval" id="dashStreak">—</div><div class="dashlabel">Day streak</div></div>
+      <div class="dashcard"><div class="dashval" id="dashWeight">—</div><div class="dashlabel">Weight change (7d)</div></div>
+    </div>
+    <div id="dashRecent"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectitle">Weekly body weight</div>
+    <div class="weightrow">
+      <input type="text" inputmode="decimal" id="weightInput" placeholder="Enter weight in kg (e.g. 72.5)">
+      <button id="weightSaveBtn">LOG</button>
+    </div>
+    <div class="weighthist" id="weightHist"></div>
+    <div class="wdelta" id="weightDelta"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectitle">Today's cardio (any day)</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <select id="cardioType" style="flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:9px;font-size:14px;">
+        <option value="Walking">Walking</option>
+        <option value="Running">Running</option>
+        <option value="Cycling">Cycling</option>
+        <option value="Cross Trainer">Cross Trainer</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <input type="text" inputmode="numeric" id="cardioDuration" placeholder="Duration (min)" style="min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:9px 10px;font-size:14px;">
+      <input type="text" inputmode="decimal" id="cardioDistance" placeholder="Distance (km)" style="min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:9px 10px;font-size:14px;">
+    </div>
+    <button id="cardioSaveBtn" style="width:100%;margin-top:8px;background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:10px;font-weight:700;font-size:13px;cursor:pointer;">LOG CARDIO</button>
+    <div id="cardioMsg" style="font-size:12px;color:var(--ok);margin-top:6px;min-height:14px;"></div>
+    <div id="cardioHist" style="margin-top:6px;"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectitle">Calendar</div>
+    <div class="calnav">
+      <button id="calPrev">‹</button>
+      <span id="calMonthLabel">—</span>
+      <button id="calNext">›</button>
+    </div>
+    <div class="calgrid" id="calGrid"></div>
+    <div id="calLegend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="multiSelectToggle" style="flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:8px;font-size:12px;cursor:pointer;">Select multiple days</button>
+      <button id="downloadSelectedBtn" style="flex:1;background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;display:none;">Download selected PDF</button>
+    </div>
+    <div id="dayDetailPanel" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="section" style="padding:10px 14px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:var(--text-dim);">Logging for</span>
+    <input type="date" id="logDateInput" style="background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:6px 8px;font-size:13px;flex:1;">
+    <button id="backToTodayBtn" style="background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;display:none;">Today</button>
+  </div>
+  <div id="pastDateBanner" style="display:none;background:var(--brass-dim);color:#fff;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;"></div>
+
+  <div class="daytabs" id="dayTabs"></div>
+  <div class="daytitle" id="dayTitle"></div>
+  <div id="exerciseList"></div>
+
+  <div class="section">
+    <div class="sectitle">Notes for this day</div>
+    <textarea id="dayNotes" placeholder="e.g. increased bench to 60kg, shoulder felt tight on set 3..."></textarea>
+  </div>
+
+  <div class="section">
+    <div class="sectitle">Progress photo</div>
+    <div id="photoArea">
+      <label class="photoUploadBtn" for="photoInput">Click to upload a photo</label>
+      <input type="file" id="photoInput" accept="image/*" style="display:none;">
+      <div id="photoPreviewWrap" style="display:none;">
+        <img id="photoPreview">
+        <button id="photoRemoveBtn" type="button">Remove photo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="savebar">
+    <button class="savebtn" id="saveBtn">SAVE TODAY'S SESSION</button>
+    <div class="savemsg" id="saveMsg"></div>
+  </div>
+
+  <div class="history">
+    <h3>Recent Sessions</h3>
+    <div id="historyList"><div class="hitem"><span>Loading…</span><span></span></div></div>
+  </div>
+
+</div>
+
+<script>
+// ---------- storage backend: browser localStorage (works fully offline once hosted as a standalone site) ----------
+window.storage = (function(){
+  const PREFIX = 'ironlog:';
+  return {
+    async get(key){
+      try{
+        const v = localStorage.getItem(PREFIX + key);
+        if(v === null) return null;
+        return { key, value: v };
+      }catch(e){ return null; }
+    },
+    async set(key, value){
+      try{
+        localStorage.setItem(PREFIX + key, value);
+        return { key, value };
+      }catch(e){ return null; }
+    },
+    async delete(key){
+      try{
+        localStorage.removeItem(PREFIX + key);
+        return { key, deleted:true };
+      }catch(e){ return null; }
+    },
+    async list(prefix){
+      try{
+        prefix = prefix || '';
+        const keys = [];
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(k && k.indexOf(PREFIX)===0){
+            const stripped = k.slice(PREFIX.length);
+            if(stripped.indexOf(prefix)===0) keys.push(stripped);
+          }
+        }
+        return { keys, prefix };
+      }catch(e){ return { keys: [] }; }
+    }
+  };
+})();
+
+// ---------- reference illustrations (custom line-art, no stock photos / no copyright risk) ----------
+const ICONS = {
+  bench: `<svg viewBox="0 0 48 48"><rect x="6" y="30" width="36" height="4" rx="1"/><line x1="10" y1="34" x2="10" y2="40"/><line x1="38" y1="34" x2="38" y2="40"/><circle cx="24" cy="20" r="4"/><line x1="24" y1="24" x2="24" y2="30"/><line x1="10" y1="16" x2="38" y2="16"/><circle cx="10" cy="16" r="3"/><circle cx="38" cy="16" r="3"/><line x1="20" y1="16" x2="16" y2="26"/><line x1="28" y1="16" x2="32" y2="26"/></svg>`,
+  incline: `<svg viewBox="0 0 48 48"><path d="M8 34L20 16H30V34"/><circle cx="24" cy="12" r="4"/><line x1="24" y1="16" x2="20" y2="24"/><line x1="12" y1="20" x2="36" y2="20"/></svg>`,
+  pushup: `<svg viewBox="0 0 48 48"><line x1="6" y1="34" x2="42" y2="34"/><line x1="10" y1="34" x2="16" y2="20"/><line x1="38" y1="34" x2="32" y2="20"/><circle cx="24" cy="16" r="4"/><line x1="24" y1="20" x2="16" y2="34"/><line x1="24" y1="20" x2="32" y2="34"/></svg>`,
+  dip: `<svg viewBox="0 0 48 48"><line x1="10" y1="16" x2="10" y2="34"/><line x1="38" y1="16" x2="38" y2="34"/><circle cx="24" cy="14" r="4"/><line x1="24" y1="18" x2="10" y2="24"/><line x1="24" y1="18" x2="38" y2="24"/><line x1="24" y1="18" x2="24" y2="34"/></svg>`,
+  pushdown: `<svg viewBox="0 0 48 48"><line x1="24" y1="6" x2="24" y2="20"/><circle cx="24" cy="24" r="4"/><line x1="24" y1="28" x2="14" y2="40"/><line x1="24" y1="28" x2="34" y2="40"/><line x1="14" y1="40" x2="34" y2="40"/></svg>`,
+  pulldown: `<svg viewBox="0 0 48 48"><line x1="24" y1="4" x2="24" y2="14"/><circle cx="24" cy="18" r="4"/><line x1="24" y1="22" x2="24" y2="38"/><line x1="24" y1="26" x2="12" y2="14"/><line x1="24" y1="26" x2="36" y2="14"/><line x1="24" y1="38" x2="16" y2="44"/><line x1="24" y1="38" x2="32" y2="44"/></svg>`,
+  row: `<svg viewBox="0 0 48 48"><line x1="8" y1="38" x2="30" y2="16"/><circle cx="34" cy="12" r="4"/><line x1="14" y1="30" x2="26" y2="30"/><line x1="14" y1="30" x2="14" y2="38"/></svg>`,
+  curl: `<svg viewBox="0 0 48 48"><line x1="14" y1="14" x2="14" y2="40"/><circle cx="14" cy="10" r="4"/><line x1="14" y1="26" x2="30" y2="18"/><line x1="30" y1="18" x2="30" y2="10"/><line x1="26" y1="10" x2="34" y2="10"/></svg>`,
+  squat: `<svg viewBox="0 0 48 48"><circle cx="24" cy="10" r="4"/><line x1="14" y1="14" x2="34" y2="14"/><line x1="24" y1="14" x2="24" y2="26"/><line x1="24" y1="26" x2="14" y2="34"/><line x1="14" y1="34" x2="14" y2="42"/><line x1="24" y1="26" x2="34" y2="34"/><line x1="34" y1="34" x2="34" y2="42"/></svg>`,
+  legpress: `<svg viewBox="0 0 48 48"><rect x="6" y="8" width="8" height="30"/><line x1="14" y1="20" x2="34" y2="20"/><line x1="14" y1="28" x2="34" y2="28"/><line x1="34" y1="14" x2="34" y2="34"/></svg>`,
+  lunge: `<svg viewBox="0 0 48 48"><circle cx="20" cy="8" r="4"/><line x1="20" y1="12" x2="20" y2="24"/><line x1="20" y1="24" x2="12" y2="42"/><line x1="20" y1="24" x2="34" y2="30"/><line x1="34" y1="30" x2="30" y2="42"/></svg>`,
+  legcurl: `<svg viewBox="0 0 48 48"><line x1="10" y1="30" x2="30" y2="30"/><line x1="10" y1="30" x2="10" y2="14"/><line x1="30" y1="30" x2="38" y2="18"/><circle cx="38" cy="14" r="3"/></svg>`,
+  calf: `<svg viewBox="0 0 48 48"><line x1="18" y1="6" x2="18" y2="28"/><line x1="18" y1="28" x2="12" y2="40"/><line x1="12" y1="40" x2="26" y2="40"/><circle cx="18" cy="2" r="0"/></svg>`,
+  ohp: `<svg viewBox="0 0 48 48"><line x1="14" y1="8" x2="14" y2="2"/><line x1="34" y1="8" x2="34" y2="2"/><line x1="14" y1="8" x2="34" y2="8"/><circle cx="24" cy="18" r="4"/><line x1="24" y1="22" x2="24" y2="38"/><line x1="24" y1="24" x2="14" y2="8"/><line x1="24" y1="24" x2="34" y2="8"/></svg>`,
+  lateral: `<svg viewBox="0 0 48 48"><circle cx="24" cy="10" r="4"/><line x1="24" y1="14" x2="24" y2="38"/><line x1="24" y1="20" x2="8" y2="16"/><line x1="24" y1="20" x2="40" y2="16"/></svg>`,
+  shrug: `<svg viewBox="0 0 48 48"><circle cx="24" cy="10" r="4"/><path d="M14 22c4-4 16-4 20 0"/><line x1="24" y1="14" x2="24" y2="40"/></svg>`,
+  plank: `<svg viewBox="0 0 48 48"><line x1="4" y1="34" x2="14" y2="34"/><line x1="14" y1="34" x2="34" y2="18"/><circle cx="38" cy="14" r="4"/></svg>`,
+  cardio: `<svg viewBox="0 0 48 48"><path d="M4 26h8l4-14 8 28 4-14h16"/></svg>`,
+  core: `<svg viewBox="0 0 48 48"><rect x="12" y="6" width="24" height="36" rx="6"/><line x1="12" y1="18" x2="36" y2="18"/><line x1="12" y1="30" x2="36" y2="30"/></svg>`,
+  rest: `<svg viewBox="0 0 48 48"><path d="M30 10a12 12 0 1 0 8 20 10 10 0 0 1-8-20z"/></svg>`
+};
+
+// ---------- workout plan ----------
+// Keep each day's default board to a clean, focused list (what actually shows up when you open that day).
+// The full variety pool for Mix Workout / AI suggestions lives separately in MIX_POOL below.
+const PLAN = [
+  { key:'d1', label:'Day 1', title:'Chest & Triceps', exercises:[
+    {name:'Bench Press', target:'4 sets x 10 reps', icon:'bench'},
+    {name:'Incline Dumbbell Press', target:'3 sets x 12 reps', icon:'incline'},
+    {name:'Push-ups', target:'3 sets x max reps', icon:'pushup'},
+    {name:'Tricep Dips', target:'3 sets x 12 reps', icon:'dip'},
+    {name:'Cable Pushdowns', target:'3 sets x 15 reps', icon:'pushdown'},
+  ]},
+  { key:'d2', label:'Day 2', title:'Back & Biceps', exercises:[
+    {name:'Lat Pulldown / Pull-ups', target:'4 sets x 10 reps', icon:'pulldown'},
+    {name:'Barbell / Dumbbell Rows', target:'3 sets x 12 reps', icon:'row'},
+    {name:'Seated Cable Rows', target:'3 sets x 12 reps', icon:'row'},
+    {name:'Bicep Curls', target:'3 sets x 12 reps', icon:'curl'},
+    {name:'Hammer Curls', target:'3 sets x 12 reps', icon:'curl'},
+  ]},
+  { key:'d3', label:'Day 3', title:'Legs', exercises:[
+    {name:'Squats', target:'4 sets x 10 reps', icon:'squat'},
+    {name:'Leg Press', target:'3 sets x 12 reps', icon:'legpress'},
+    {name:'Lunges', target:'3 sets x 12 reps/leg', icon:'lunge'},
+    {name:'Leg Curls', target:'3 sets x 15 reps', icon:'legcurl'},
+    {name:'Calf Raises', target:'3 sets x 20 reps', icon:'calf'},
+  ]},
+  { key:'d4', label:'Day 4', title:'Shoulders & Abs', exercises:[
+    {name:'Overhead Press', target:'4 sets x 10 reps', icon:'ohp'},
+    {name:'Lateral Raises', target:'3 sets x 15 reps', icon:'lateral'},
+    {name:'Front Raises', target:'3 sets x 12 reps', icon:'lateral'},
+    {name:'Shrugs', target:'3 sets x 15 reps', icon:'shrug'},
+    {name:'Planks + Hanging Leg Raises', target:'3 rounds', icon:'plank'},
+  ]},
+  { key:'d5', label:'Day 5', title:'Cardio & Abdomen', exercises:[
+    {name:'Cardio (walk/cycle/elliptical)', target:'30 min moderate', icon:'cardio'},
+    {name:'Plank Circuit', target:'3 rounds', icon:'plank'},
+    {name:'Bicycle Crunches', target:'3 sets x 20', icon:'core'},
+    {name:'Mountain Climbers', target:'3 sets x 1 min', icon:'core'},
+  ]},
+  { key:'d6', label:'Day 6', title:'Full Body (weak point + light cardio)', exercises:[
+    {name:'Weakest Muscle Group — Compound Lift', target:'4 sets x 10 reps', icon:'bench'},
+    {name:'Weakest Muscle Group — Accessory', target:'3 sets x 12 reps', icon:'row'},
+    {name:'Light Cardio', target:'20 min easy pace', icon:'cardio'},
+    {name:'Core Finisher', target:'2 rounds', icon:'core'},
+  ]},
+  { key:'d7', label:'Day 7', title:'Rest Day', exercises:[
+    {name:'Rest / Light Stretching', target:'Full recovery — no logging needed', icon:'rest'},
+  ]},
+  { key:'mix', label:'Mix', title:'Mix Workout', exercises:[] },
+];
+
+// Extra variety pool — used ONLY for the Mix Workout picker and AI suggestion context,
+// so the daily boards above stay clean while Mix still has plenty of choice.
+const MIX_POOL = {
+  'Chest & Triceps': [
+    {name:'Decline Bench Press', target:'3 sets x 10 reps', icon:'bench'},
+    {name:'Dumbbell Chest Fly', target:'3 sets x 12 reps', icon:'incline'},
+    {name:'Cable Crossover', target:'3 sets x 15 reps', icon:'incline'},
+    {name:'Overhead Tricep Extension', target:'3 sets x 12 reps', icon:'pushdown'},
+    {name:'Close-Grip Bench Press', target:'3 sets x 10 reps', icon:'bench'},
+  ],
+  'Back & Biceps': [
+    {name:'Deadlift', target:'3 sets x 8 reps', icon:'row'},
+    {name:'T-Bar Row', target:'3 sets x 10 reps', icon:'row'},
+    {name:'Single-Arm Dumbbell Row', target:'3 sets x 12 reps/side', icon:'row'},
+    {name:'Face Pulls', target:'3 sets x 15 reps', icon:'pulldown'},
+    {name:'Preacher Curl', target:'3 sets x 12 reps', icon:'curl'},
+    {name:'Concentration Curl', target:'3 sets x 12 reps/side', icon:'curl'},
+  ],
+  'Legs': [
+    {name:'Front Squats', target:'3 sets x 10 reps', icon:'squat'},
+    {name:'Romanian Deadlift', target:'3 sets x 10 reps', icon:'squat'},
+    {name:'Bulgarian Split Squat', target:'3 sets x 10 reps/leg', icon:'lunge'},
+    {name:'Leg Extension', target:'3 sets x 15 reps', icon:'legcurl'},
+    {name:'Hip Thrust', target:'3 sets x 12 reps', icon:'squat'},
+    {name:'Seated Calf Raise', target:'3 sets x 20 reps', icon:'calf'},
+  ],
+  'Shoulders & Abs': [
+    {name:'Arnold Press', target:'3 sets x 12 reps', icon:'ohp'},
+    {name:'Rear Delt Fly', target:'3 sets x 15 reps', icon:'lateral'},
+    {name:'Upright Row', target:'3 sets x 12 reps', icon:'shrug'},
+    {name:'Russian Twists', target:'3 sets x 20', icon:'core'},
+    {name:'Cable Crunch', target:'3 sets x 15 reps', icon:'core'},
+  ],
+  'Cardio & Abdomen': [
+    {name:'Interval Sprints', target:'8 rounds x 30 sec', icon:'cardio'},
+    {name:'Stair Climber', target:'20 min moderate', icon:'cardio'},
+    {name:'Rowing Machine', target:'20 min moderate', icon:'cardio'},
+    {name:'Dead Bug', target:'3 sets x 12 reps/side', icon:'core'},
+  ],
+  'Full Body (weak point + light cardio)': [
+    {name:'Kettlebell Swings', target:'3 sets x 15 reps', icon:'squat'},
+    {name:'Burpees', target:'3 sets x 12 reps', icon:'pushup'},
+  ],
+};
+
+// flat list of every exercise (daily boards + variety pool), used to populate the Mix Workout picker
+// distinct color per category, used for badges, headers, day tabs, and the calendar
+const CATEGORY_COLORS = {
+  'Chest & Triceps': '#c96a4a',
+  'Back & Biceps': '#4a90c9',
+  'Legs': '#5fae6a',
+  'Shoulders & Abs': '#a35fc9',
+  'Cardio & Abdomen': '#3fb8b0',
+  'Full Body (weak point + light cardio)': '#c9a34a',
+  'Rest Day': '#6e6e64',
+  'Mix Workout': '#d15f9e',
+};
+function categoryColor(title){ return CATEGORY_COLORS[title] || 'var(--brass)'; }
+
+// palette to auto-assign colors to any new custom category
+const CUSTOM_COLOR_PALETTE = ['#e2b93b','#7c83fd','#4ecdc4','#ff6b9d','#95e06c','#ff9f5b','#5bc0eb','#c77dff'];
+function nextCustomColor(){
+  const used = new Set(Object.values(CATEGORY_COLORS));
+  const free = CUSTOM_COLOR_PALETTE.find(c=>!used.has(c));
+  return free || CUSTOM_COLOR_PALETTE[Object.keys(CATEGORY_COLORS).length % CUSTOM_COLOR_PALETTE.length];
+}
+
+async function loadCustomCategories(){
+  try{
+    const r = await window.storage.get('customCategories', false);
+    if(r && r.value){
+      const list = JSON.parse(r.value);
+      list.forEach(c=>{
+        if(!PLAN.find(d=>d.key===c.key)){
+          const mixIdx = PLAN.findIndex(d=>d.key==='mix');
+          PLAN.splice(mixIdx, 0, { key:c.key, label:'Custom', title:c.title, exercises:[] });
+          CATEGORY_COLORS[c.title] = c.color;
+        }
+      });
+    }
+  }catch(e){}
+}
+
+async function addCustomCategory(){
+  const name = (prompt('Name your new workout category (e.g. "Forearms", "Yoga", "HIIT"):') || '').trim();
+  if(!name) return;
+  if(PLAN.find(d=>d.title.toLowerCase()===name.toLowerCase())){ alert('That category already exists.'); return; }
+  const key = 'custom_' + Date.now();
+  const color = nextCustomColor();
+  const mixIdx = PLAN.findIndex(d=>d.key==='mix');
+  PLAN.splice(mixIdx, 0, { key, label:'Custom', title:name, exercises:[] });
+  CATEGORY_COLORS[name] = color;
+  try{
+    const r = await window.storage.get('customCategories', false);
+    const list = (r && r.value) ? JSON.parse(r.value) : [];
+    list.push({ key, title:name, color });
+    await window.storage.set('customCategories', JSON.stringify(list), false);
+  }catch(e){}
+  currentDay = key;
+  currentSets = {};
+  currentNotes = '';
+  currentExtras = [];
+  resetPhotoUI();
+  document.getElementById('dayNotes').value = '';
+  renderTabs();
+  renderDay();
+}
+
+const ALL_EXERCISES = [];
+PLAN.forEach(d=>{ if(d.key!=='mix') d.exercises.forEach(e=>{ if(!ALL_EXERCISES.find(x=>x.name===e.name)) ALL_EXERCISES.push({...e, category: d.title}); }); });
+Object.entries(MIX_POOL).forEach(([category, list])=>{ list.forEach(e=>{ if(!ALL_EXERCISES.find(x=>x.name===e.name)) ALL_EXERCISES.push({...e, category}); }); });
+
+let dynamicLists = { mix: [] }; // day.key -> [{name, target, icon}] — for Mix Workout AND any custom categories you add
+function getDynamicList(dayKey){ if(!dynamicLists[dayKey]) dynamicLists[dayKey] = []; return dynamicLists[dayKey]; }
+let currentExtras = []; // ad-hoc exercises added (via AI suggestion or custom) on a regular (non-mix) day
+let cachedSuggestions = {}; // day.key -> array of {name, reason} — persists across re-renders
+let cachedSwaps = {}; // exercise name -> array of {name, reason} alternatives (e.g. when equipment unavailable)
+
+let currentDay = PLAN[0].key;
+let selectedLogDate = todayKey(); // the date this session actually gets saved to — defaults to today, changeable to log a missed past day
+let latestWeightKg = 72.5; // fallback until a real weigh-in is loaded
+let dailyCalorieGoal = 400; // default target, user-editable
+
+// rough MET-based calorie estimate — not a medical measurement, just a useful ballpark
+function estimateStrengthCalories(session){
+  let totalSets = 0;
+  Object.values(session.sets||{}).forEach(arr=>{ totalSets += (arr||[]).filter(x=>x.w||x.r||x.done).length; });
+  const minutesPerSet = 2.5; // includes rest between sets
+  const hours = (totalSets*minutesPerSet)/60;
+  const MET = 5.0; // general resistance training
+  return Math.round(MET*latestWeightKg*hours);
+}
+function estimateCardioCalories(entry){
+  const METS = {Walking:4.0, Running:8.3, Cycling:7.5, 'Cross Trainer':5.0, Other:5.0};
+  const met = METS[entry.type] || 5.0;
+  const hours = (parseFloat(entry.duration)||0)/60;
+  return Math.round(met*latestWeightKg*hours);
+}
+function totalCaloriesForDay(data){
+  let total = 0;
+  (data.sessions||[]).forEach(s=>{ total += estimateStrengthCalories(s); });
+  (data.cardio||[]).forEach(c=>{ total += estimateCardioCalories(c); });
+  return total;
+}
+let currentSets = {};
+let currentNotes = '';
+let currentPhoto = null; // base64 data URL or null
+let calViewDate = new Date();
+let sessionDates = new Set(); // 'YYYY-MM-DD' strings with a saved session
+
+function resetPhotoUI(){
+  currentPhoto = null;
+  document.getElementById('photoPreviewWrap').style.display = 'none';
+  document.getElementById('photoInput').value = '';
+}
+
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function dateKey(y,m,d){ return y+'-'+pad(m+1)+'-'+pad(d); }
+
+// ---------- day tabs / exercises ----------
+function renderTabs(){
+  const el = document.getElementById('dayTabs');
+  el.innerHTML = '';
+  PLAN.forEach(d=>{
+    const btn = document.createElement('div');
+    btn.className = 'daytab' + (d.key===currentDay ? ' active' : '');
+    btn.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${categoryColor(d.title)};margin-right:6px;vertical-align:middle;"></span>${d.title}`;
+    btn.onclick = ()=>{
+      currentDay = d.key;
+      currentSets = {};
+      currentNotes = '';
+      currentExtras = [];
+      resetPhotoUI();
+      document.getElementById('dayNotes').value = '';
+      renderTabs();
+      renderDay();
+      loadTodayIfExists();
+    };
+    el.appendChild(btn);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'daytab';
+  addBtn.style.cssText = 'border-style:dashed;color:var(--brass);font-weight:700;';
+  addBtn.textContent = '+ Add category';
+  addBtn.onclick = ()=>{ addCustomCategory(); };
+  el.appendChild(addBtn);
+}
+
+function setCountFor(exName){
+  const day = PLAN.find(d=>d.key===currentDay);
+  const ex = day.exercises.find(e=>e.name===exName);
+  const m = ex.target.match(/^(\d+)\s*sets?/i);
+  return m ? parseInt(m[1]) : 3;
+}
+
+function renderDay(){
+  const day = PLAN.find(d=>d.key===currentDay);
+  document.getElementById('dayTitle').textContent = day.title;
+  const list = document.getElementById('exerciseList');
+  list.innerHTML = '';
+
+  const isMix = day.exercises.length === 0; // true for Mix Workout AND any custom category you add
+  const exercises = isMix ? getDynamicList(day.key) : day.exercises.concat(currentExtras);
+
+  if(isMix){
+    const picker = document.createElement('div');
+    picker.className = 'card';
+    picker.innerHTML = `
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Build today's "${day.title}" session by adding exercises from any group:</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="mixPicker" style="flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:9px;font-size:14px;">
+          ${PLAN.filter(d=>d.exercises.length>0).map(d=>{
+            const groupExercises = ALL_EXERCISES.filter(e=>e.category===d.title);
+            return `<optgroup label="${d.title}">${groupExercises.map(e=>`<option value="${e.name}">${e.name} — ${d.title}</option>`).join('')}</optgroup>`;
+          }).join('')}
+        </select>
+        <button id="mixAddBtn" style="background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:0 16px;font-weight:700;cursor:pointer;">ADD</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">Or type any other exercise:</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="mixCustomInput" placeholder="e.g. Cable Woodchopper" style="flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:9px 10px;font-size:14px;">
+        <button id="mixCustomAddBtn" style="background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:0 16px;font-weight:700;cursor:pointer;">ADD</button>
+      </div>
+    `;
+    list.appendChild(picker);
+  }
+
+  // AI exercise-suggestion box — available on any training day (not Rest)
+  if(day.key !== 'd7'){
+    const suggestions = cachedSuggestions[day.key];
+    const suggestBox = document.createElement('div');
+    suggestBox.className = 'card';
+    let suggestionsHtml = '';
+    if(suggestions && suggestions.length){
+      suggestionsHtml = suggestions.map(s=>{
+        const already = exercises.find(e=>e.name.toLowerCase()===s.name.toLowerCase());
+        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line);padding:8px 0;">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;">${s.name}</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${s.reason||''}</div>
+          </div>
+          ${already
+            ? `<span style="font-size:11px;color:var(--ok);flex:0 0 auto;padding-top:2px;">Added ✓</span>`
+            : `<button class="suggestAddBtn" data-name="${s.name}" style="flex:0 0 auto;background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>`}
+        </div>`;
+      }).join('');
+    }
+    suggestBox.innerHTML = `
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Want to switch things up? Ask AI for fresh exercise ideas for this muscle group:</div>
+      <button id="suggestBtn" style="width:100%;background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">${suggestions ? 'Get new suggestions' : 'Suggest exercises for ' + day.title}</button>
+      <div id="suggestResult" style="margin-top:10px;">${suggestionsHtml}</div>
+    `;
+    list.appendChild(suggestBox);
+    document.getElementById('suggestBtn').addEventListener('click', ()=>{ runExerciseSuggestion(day); });
+    suggestBox.querySelectorAll('.suggestAddBtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const s = suggestions.find(x=>x.name===btn.dataset.name);
+        addExerciseToDay(s, isMix);
+      });
+    });
+  }
+
+  if(exercises.length===0 && isMix){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:13px;color:var(--text-dim);padding:8px 2px;';
+    empty.textContent = 'No exercises added yet — pick from the dropdown above to build today\'s workout.';
+    list.appendChild(empty);
+  }
+
+  exercises.forEach(ex=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const isExtra = isMix || !!ex.extra;
+    const isUnilateral = /\/(side|leg)\b/i.test(ex.target||'');
+    const baseSets = isExtra ? (currentSets[ex.name] ? Math.ceil(currentSets[ex.name].length / (isUnilateral?2:1)) : 3) : setCountFor(ex.name);
+    const nSets = isUnilateral ? baseSets*2 : baseSets;
+    if(!currentSets[ex.name]){
+      currentSets[ex.name] = Array.from({length:nSets},()=>({w:'',r:'',done:false}));
+    }
+
+    let setsHtml = '';
+    const isCardioType = ex.icon === 'cardio';
+    const isBodyweightType = (ex.icon === 'core' || ex.icon === 'plank') && !isCardioType;
+    const timeUnit = isCardioType ? null : (/min\b/i.test(ex.target||'') ? 'min' : (/sec\b/i.test(ex.target||'') ? 'sec' : null));
+    const isTimedType = !!timeUnit;
+    if(isCardioType){
+      // duration/distance entry instead of weight/reps — matches how the dedicated Cardio section works
+      currentSets[ex.name].forEach((s,i)=>{
+        const hasData = !!(s.w || s.r);
+        setsHtml += `
+          <div class="setrow" data-ex="${ex.name}" data-idx="${i}">
+            <div class="setno">${i===0?'':''}</div>
+            <input type="text" inputmode="numeric" placeholder="Duration (min)" value="${s.w}" data-field="w">
+            <input type="text" inputmode="decimal" placeholder="Distance (km, optional)" value="${s.r}" data-field="r">
+            <div class="done ${s.done?'checked':''} ${!hasData && !s.done?'disabled':''}" data-field="done" title="${hasData?'':'Enter duration first'}">${s.done?'✓':''}</div>
+          </div>`;
+      });
+    } else if(isBodyweightType){
+      // bodyweight exercise — no equipment, so no weight field, just reps or seconds
+      currentSets[ex.name].forEach((s,i)=>{
+        const hasData = !!s.r;
+        setsHtml += `
+          <div class="setrow single" data-ex="${ex.name}" data-idx="${i}">
+            <div class="setno">#${i+1}</div>
+            <input type="text" inputmode="numeric" placeholder="${timeUnit==='min'?'minutes':timeUnit==='sec'?'seconds':'reps'}" value="${s.r}" data-field="r">
+            <div class="done ${s.done?'checked':''} ${!hasData && !s.done?'disabled':''}" data-field="done" title="${hasData?'':'Enter '+(timeUnit==='min'?'minutes':timeUnit==='sec'?'seconds':'reps')+' first'}">${s.done?'✓':''}</div>
+          </div>`;
+      });
+    } else {
+    if(isUnilateral) setsHtml += `<div style="font-size:10px;color:var(--text-dim);text-align:center;margin-bottom:4px;letter-spacing:1px;">— LEFT SIDE —</div>`;
+    const half = Math.ceil(currentSets[ex.name].length/2);
+    currentSets[ex.name].forEach((s,i)=>{
+      const hasData = !!(s.w || s.r);
+      let label = `#${i+1}`;
+      if(isUnilateral){
+        label = i < half ? `L${i+1}` : `R${i-half+1}`;
+      }
+      setsHtml += `
+        <div class="setrow" data-ex="${ex.name}" data-idx="${i}">
+          <div class="setno" style="${isUnilateral?'font-weight:700;color:var(--brass);':''}">${label}</div>
+          <input type="text" inputmode="decimal" placeholder="weight (kg)" value="${s.w}" data-field="w">
+          <input type="text" inputmode="numeric" placeholder="${timeUnit==='min'?'minutes':timeUnit==='sec'?'seconds':'reps'}" value="${s.r}" data-field="r">
+          <div class="done ${s.done?'checked':''} ${!hasData && !s.done?'disabled':''}" data-field="done" title="${hasData?'':'Enter weight or reps first'}">${s.done?'✓':''}</div>
+        </div>`;
+      if(isUnilateral && i === half-1 && i < currentSets[ex.name].length-1){
+        setsHtml += `<div style="font-size:10px;color:var(--text-dim);text-align:center;margin:2px 0 4px;letter-spacing:1px;">— RIGHT SIDE —</div>`;
+      }
+    });
+    }
+
+    const swaps = cachedSwaps[ex.name];
+    let swapHtml = '';
+    if(swaps && swaps.length){
+      swapHtml = `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Not available? Try instead:</div>
+        ${swaps.map(sw=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;">${sw.name}</div>
+            <div style="font-size:11px;color:var(--text-dim);">${sw.reason||''}</div>
+          </div>
+          <button class="swapAddBtn" data-ex="${ex.name}" data-name="${sw.name}" style="flex:0 0 auto;background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;">+ Add</button>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="icon">${ICONS[ex.icon]||ICONS.core}</div>
+        <div style="flex:1;">
+          <div class="exname">${ex.name}${isMix && ex.category ? ` <span style="font-size:10px;font-weight:400;color:${categoryColor(ex.category)};border:1px solid ${categoryColor(ex.category)};border-radius:3px;padding:1px 6px;vertical-align:middle;">${ex.category}</span>` : ''}${!isMix && ex.extra ? ` <span style="font-size:10px;font-weight:400;color:var(--text-dim);border:1px solid var(--line);border-radius:3px;padding:1px 6px;vertical-align:middle;">Added</span>` : ''}</div>
+          <div class="extarget">${ex.target}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <a class="photolink" target="_blank" rel="noopener" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(ex.name + ' exercise form')}">View real photos</a>
+        <button class="swapBtn" data-ex="${ex.name}" style="flex:0 0 auto;background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:6px 10px;font-size:11px;cursor:pointer;">⇄ Not available? Swap</button>
+        <button class="resetSetsBtn" data-ex="${ex.name}" style="flex:0 0 auto;background:var(--panel2);border:1px solid var(--line);color:var(--text-dim);border-radius:4px;padding:6px 10px;font-size:11px;cursor:pointer;">↺ Reset entries</button>
+        ${isMix ? `<button class="mixRemoveBtn" data-ex="${ex.name}" style="flex:0 0 auto;background:var(--panel2);border:1px solid var(--line);color:var(--danger);border-radius:4px;padding:6px 10px;font-size:11px;cursor:pointer;">Remove</button>` : ''}
+        ${!isMix && ex.extra ? `<button class="extraRemoveBtn" data-ex="${ex.name}" style="flex:0 0 auto;background:var(--panel2);border:1px solid var(--line);color:var(--danger);border-radius:4px;padding:6px 10px;font-size:11px;cursor:pointer;">Remove</button>` : ''}
+      </div>
+      <div class="sets">${setsHtml}</div>
+      ${swapHtml}
+    `;
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll('.resetSetsBtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const name = e.target.dataset.ex;
+      currentSets[name] = currentSets[name].map(()=>({w:'',r:'',done:false}));
+      renderDay();
+    });
+  });
+
+  list.querySelectorAll('.swapBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ runExerciseSwap(btn.dataset.ex, day, isMix); });
+  });
+  list.querySelectorAll('.swapAddBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const swaps = cachedSwaps[btn.dataset.ex] || [];
+      const s = swaps.find(x=>x.name===btn.dataset.name);
+      if(s) addExerciseToDay(s, isMix);
+    });
+  });
+
+  list.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const row = e.target.closest('.setrow');
+      const ex = row.dataset.ex, idx = +row.dataset.idx, field = e.target.dataset.field;
+      currentSets[ex][idx][field] = e.target.value;
+      const s = currentSets[ex][idx];
+      const hasData = !!(s.w || s.r);
+      const doneEl = row.querySelector('.done');
+      if(!s.done){
+        doneEl.classList.toggle('disabled', !hasData);
+        doneEl.title = hasData ? '' : 'Enter weight or reps first';
+      }
+    });
+  });
+  list.querySelectorAll('.done').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const row = e.target.closest('.setrow');
+      const ex = row.dataset.ex, idx = +row.dataset.idx;
+      const s = currentSets[ex][idx];
+      const hasData = !!(s.w || s.r);
+      if(!hasData && !s.done) return; // nothing entered yet — ignore the tap
+      s.done = !s.done;
+      renderDay();
+    });
+  });
+
+  list.querySelectorAll('.extraRemoveBtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const name = e.target.dataset.ex;
+      currentExtras = currentExtras.filter(e=>e.name!==name);
+      delete currentSets[name];
+      renderDay();
+    });
+  });
+
+  if(isMix){
+    document.getElementById('mixAddBtn').addEventListener('click', ()=>{
+      const name = document.getElementById('mixPicker').value;
+      const listArr = getDynamicList(currentDay);
+      if(listArr.find(e=>e.name===name)) return;
+      const ex = ALL_EXERCISES.find(e=>e.name===name);
+      listArr.push(ex);
+      renderDay();
+    });
+    document.getElementById('mixCustomAddBtn').addEventListener('click', ()=>{
+      const input = document.getElementById('mixCustomInput');
+      const name = input.value.trim();
+      const listArr = getDynamicList(currentDay);
+      if(!name || listArr.find(e=>e.name===name)) return;
+      listArr.push({ name, target:'3 sets x 12 reps', icon:'core', category:'Custom' });
+      renderDay();
+    });
+    list.querySelectorAll('.mixRemoveBtn').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const name = e.target.dataset.ex;
+        dynamicLists[currentDay] = getDynamicList(currentDay).filter(e=>e.name!==name);
+        delete currentSets[name];
+        renderDay();
+      });
+    });
+  }
+  if(selectedLogDate === todayKey()) loadTodaySummary();
+}
+
+function addExerciseToDay(ex, isMix){
+  if(!ex || !ex.name) return;
+  if(isMix){
+    const listArr = getDynamicList(currentDay);
+    if(listArr.find(e=>e.name.toLowerCase()===ex.name.toLowerCase())) return;
+    listArr.push({ name: ex.name, target: ex.target || '3 sets x 12 reps', icon: ex.icon || 'core', category: ex.category || 'Custom' });
+  } else {
+    const day = PLAN.find(d=>d.key===currentDay);
+    if(day.exercises.find(e=>e.name.toLowerCase()===ex.name.toLowerCase())) return;
+    if(currentExtras.find(e=>e.name.toLowerCase()===ex.name.toLowerCase())) return;
+    currentExtras.push({ name: ex.name, target: ex.target || '3 sets x 12 reps', icon: ex.icon || 'core', extra: true });
+  }
+  renderDay();
+}
+
+async function saveSession(){
+  const msg = document.getElementById('saveMsg');
+  try{
+    const key = 'session:' + selectedLogDate + ':' + currentDay;
+    const photoKey = 'photo:' + selectedLogDate + ':' + currentDay;
+    const dayIsDynamic = PLAN.find(d=>d.key===currentDay).exercises.length === 0;
+
+    // save the photo separately first — if it's too big for storage, we don't want that
+    // failure to also wipe out the sets and notes in the same save.
+    let photoSaved = true;
+    if(currentPhoto){
+      try{
+        const pResult = await window.storage.set(photoKey, currentPhoto, false);
+        photoSaved = !!pResult;
+      }catch(e){ photoSaved = false; }
+    } else {
+      try{ await window.storage.delete(photoKey, false); }catch(e){}
+    }
+
+    const payload = { date: selectedLogDate, day: currentDay, dayLabel: PLAN.find(d=>d.key===currentDay).title, sets: currentSets, note: currentNotes, hasPhoto: !!(currentPhoto && photoSaved), mixExercises: dayIsDynamic ? getDynamicList(currentDay) : undefined, extras: !dayIsDynamic ? currentExtras : undefined };
+    const result = await window.storage.set(key, JSON.stringify(payload), false);
+    if(result){
+      msg.textContent = photoSaved ? 'Saved ✓' : 'Saved (photo was too large to store — try a different one)';
+      loadHistory();
+      loadCalendarData();
+      loadDashboard();
+      loadTodaySummary();
+    } else {
+      msg.textContent = 'Could not save — try again';
+    }
+  } catch(err){ msg.textContent = 'Storage error: ' + (err && err.message ? err.message : 'try again'); }
+  setTimeout(()=>{ msg.textContent=''; }, 3500);
+}
+
+async function loadHistory(){
+  const el = document.getElementById('historyList');
+  try{
+    const listResult = await window.storage.list('session:', false);
+    if(!listResult || !listResult.keys || listResult.keys.length===0){
+      el.innerHTML = '<div class="hitem"><span>No sessions logged yet</span><span></span></div>';
+      return;
+    }
+    const keys = listResult.keys.sort().reverse().slice(0,7);
+    let html = '';
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, false);
+        if(r && r.value){
+          const p = JSON.parse(r.value);
+          const totalSets = Object.values(p.sets).reduce((a,arr)=>a+arr.filter(s=>s.done).length,0);
+          const cal = estimateStrengthCalories(p);
+          html += `<div class="hitem"><span>${p.date} — <span style="color:${categoryColor(p.dayLabel)};font-weight:600;">${p.dayLabel}</span></span><span>${totalSets} sets done · ~${cal} kcal <span class="logDel" data-key="${k}" data-refresh="session" title="Delete this log">✕</span></span></div>`;
+        }
+      }catch(e){}
+    }
+    el.innerHTML = html || '<div class="hitem"><span>No sessions logged yet</span><span></span></div>';
+    wireDeleteButtons(el);
+  }catch(err){ el.innerHTML = '<div class="hitem"><span>No sessions logged yet</span><span></span></div>'; }
+}
+
+// shared delete-button wiring: any element with class "logDel" and a data-key deletes that storage entry, then refreshes relevant views
+function wireDeleteButtons(container){
+  container.querySelectorAll('.logDel').forEach(btn=>{
+    btn.addEventListener('click', async e=>{
+      e.stopPropagation();
+      const key = e.target.dataset.key;
+      try{
+        await window.storage.delete(key, false);
+        loadHistory();
+        loadWeights();
+        loadCardio();
+        loadCalendarData();
+        loadDashboard();
+        loadTodaySummary();
+      }catch(err){}
+    });
+  });
+}
+
+async function loadTodayIfExists(){
+  // clear current state first so switching dates doesn't leak data from a previously viewed date
+  currentSets = {};
+  currentNotes = '';
+  currentPhoto = null;
+  currentExtras = [];
+  if(PLAN.find(d=>d.key===currentDay) && PLAN.find(d=>d.key===currentDay).exercises.length===0) dynamicLists[currentDay] = [];
+  document.getElementById('dayNotes').value = '';
+  document.getElementById('photoPreviewWrap').style.display = 'none';
+  try{
+    const key = 'session:' + selectedLogDate + ':' + currentDay;
+    const r = await window.storage.get(key, false);
+    if(r && r.value){
+      const p = JSON.parse(r.value);
+      currentSets = p.sets || {};
+      currentNotes = p.note || '';
+      const dayIsDynamic = PLAN.find(d=>d.key===currentDay).exercises.length === 0;
+      if(dayIsDynamic) dynamicLists[currentDay] = p.mixExercises || [];
+      else currentExtras = p.extras || [];
+      document.getElementById('dayNotes').value = currentNotes;
+
+      // photo: new sessions store it under its own key; fall back to the old embedded field for older saves
+      currentPhoto = null;
+      if(p.hasPhoto){
+        try{
+          const pr = await window.storage.get('photo:' + selectedLogDate + ':' + currentDay, false);
+          if(pr && pr.value) currentPhoto = pr.value;
+        }catch(e){}
+      } else if(p.photo){
+        currentPhoto = p.photo;
+      }
+      if(currentPhoto){
+        document.getElementById('photoPreview').src = currentPhoto;
+        document.getElementById('photoPreviewWrap').style.display = 'block';
+      } else {
+        document.getElementById('photoPreviewWrap').style.display = 'none';
+      }
+    }
+  }catch(e){}
+  renderDay();
+}
+
+// ---------- weight tracker ----------
+async function saveWeight(){
+  const input = document.getElementById('weightInput');
+  const val = parseFloat(input.value);
+  if(!val || val<=0){ return; }
+  try{
+    const key = 'weight:' + todayKey();
+    await window.storage.set(key, JSON.stringify({date: todayKey(), kg: val}), false);
+    input.value = '';
+    loadWeights();
+    loadDashboard();
+    loadTodaySummary();
+  }catch(e){}
+}
+
+async function loadWeights(){
+  const histEl = document.getElementById('weightHist');
+  const deltaEl = document.getElementById('weightDelta');
+  try{
+    const listResult = await window.storage.list('weight:', false);
+    if(!listResult || !listResult.keys || listResult.keys.length===0){
+      histEl.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">No entries yet — log your first weigh-in above.</div>';
+      deltaEl.textContent = '';
+      return;
+    }
+    const keys = listResult.keys.sort().slice(-8);
+    const entries = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, false);
+        if(r && r.value) entries.push({ key:k, ...JSON.parse(r.value) });
+      }catch(e){}
+    }
+    entries.sort((a,b)=>a.date.localeCompare(b.date));
+    if(entries.length>0){ latestWeightKg = entries[entries.length-1].kg; }
+    histEl.innerHTML = entries.map(e=>{
+      const d = new Date(e.date);
+      return `<div class="wentry"><span class="logDel" data-key="${e.key}" title="Delete this entry">✕</span><div class="wv">${e.kg}</div><div class="wd">${d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div></div>`;
+    }).join('');
+    wireDeleteButtons(histEl);
+    if(entries.length>=2){
+      const first = entries[0].kg, last = entries[entries.length-1].kg;
+      const diff = (last-first).toFixed(1);
+      deltaEl.className = 'wdelta ' + (diff<0?'down':diff>0?'up':'');
+      deltaEl.textContent = (diff>0?'+':'') + diff + ' kg since ' + new Date(entries[0].date).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    } else {
+      deltaEl.textContent = '';
+    }
+  }catch(err){
+    histEl.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">No entries yet — log your first weigh-in above.</div>';
+    deltaEl.textContent = '';
+  }
+}
+
+// ---------- daily cardio (independent of split day) ----------
+async function saveCardio(){
+  const msg = document.getElementById('cardioMsg');
+  const type = document.getElementById('cardioType').value;
+  const duration = document.getElementById('cardioDuration').value;
+  const distance = document.getElementById('cardioDistance').value;
+  if(!duration){ msg.style.color='var(--danger)'; msg.textContent = 'Enter a duration first'; setTimeout(()=>{msg.textContent='';},2000); return; }
+
+  if(typeof window.storage === 'undefined' || typeof localStorage === 'undefined'){
+    msg.style.color='var(--danger)';
+    msg.textContent = 'Browser storage is blocked (e.g. private/incognito mode) — enable it to save.';
+    return;
+  }
+
+  msg.style.color='var(--text-dim)';
+  msg.textContent = 'Saving…';
+  try{
+    const key = 'cardio:' + todayKey() + ':' + Date.now();
+    const result = await window.storage.set(key, JSON.stringify({date:todayKey(), type, duration, distance}), false);
+    if(!result){
+      msg.style.color='var(--danger)';
+      msg.textContent = 'Save did not confirm — try again.';
+      setTimeout(()=>{ msg.textContent=''; }, 4000);
+      return;
+    }
+    msg.style.color = 'var(--ok)';
+    msg.textContent = 'Logged ✓';
+    document.getElementById('cardioDuration').value = '';
+    document.getElementById('cardioDistance').value = '';
+    loadCardio();
+    loadDashboard();
+    loadTodaySummary();
+    setTimeout(()=>{ msg.textContent=''; }, 2500);
+  }catch(e){
+    msg.style.color='var(--danger)';
+    msg.textContent = 'Could not save: ' + (e && e.message ? e.message : 'unknown error');
+    setTimeout(()=>{ msg.textContent=''; }, 5000);
+  }
+}
+
+async function loadCardio(){
+  const el = document.getElementById('cardioHist');
+  try{
+    const listResult = await window.storage.list('cardio:', false);
+    if(!listResult || !listResult.keys || listResult.keys.length===0){
+      el.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">No cardio logged yet this week.</div>';
+      return;
+    }
+    const keys = listResult.keys.sort().reverse().slice(0,12);
+    let html = '';
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k, false);
+        if(r && r.value){
+          const c = JSON.parse(r.value);
+          const parts = k.split(':');
+          const ts = parts[2] ? new Date(parseInt(parts[2])) : null;
+          const timeStr = ts ? ts.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '';
+          const cal = estimateCardioCalories(c);
+          html += `<div class="hitem"><span>${c.date} ${timeStr} — ${c.type}</span><span>${c.duration} min${c.distance?', '+c.distance+' km':''} · ~${cal} kcal <span class="logDel" data-key="${k}" title="Delete this entry">✕</span></span></div>`;
+        }
+      }catch(e){}
+    }
+    el.innerHTML = html;
+    wireDeleteButtons(el);
+  }catch(e){ el.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">No cardio logged yet this week.</div>'; }
+}
+
+// ---------- dashboard ----------
+function last7Dates(){
+  const dates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+  return dates;
+}
+
+async function loadTodaySummary(){
+  const el = document.getElementById('todaySummary');
+  try{
+    const data = await getDayData(todayKey());
+    // if we're currently viewing today, fold in whatever's on-screen but not yet saved,
+    // so this summary is never out of sync with what you're actively editing
+    if(selectedLogDate === todayKey() && Object.keys(currentSets).length>0){
+      const liveLabel = PLAN.find(d=>d.key===currentDay).title;
+      const existingIdx = data.sessions.findIndex(s=>s.dayLabel===liveLabel);
+      const liveSession = { dayLabel: liveLabel + (existingIdx>=0 ? '' : ' (unsaved)'), sets: currentSets, note: currentNotes, photo: currentPhoto, key: existingIdx>=0 ? data.sessions[existingIdx].key : undefined };
+      if(existingIdx>=0) data.sessions[existingIdx] = liveSession;
+      else data.sessions.push(liveSession);
+    }
+    el.innerHTML = dayDataToHtml(data);
+    el.querySelectorAll('.logDel').forEach(btn=>{
+      btn.addEventListener('click', async e=>{
+        e.stopPropagation();
+        try{
+          await window.storage.delete(e.target.dataset.key, false);
+          loadTodaySummary(); loadHistory(); loadWeights(); loadCardio(); loadCalendarData(); loadDashboard();
+        }catch(err){}
+      });
+    });
+  }catch(e){
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">Nothing logged yet today.</div>';
+  }
+}
+
+async function loadDashboard(){
+  try{
+    const week = last7Dates();
+    const weekSet = new Set(week);
+
+    // sessions this week
+    const sessListResult = await window.storage.list('session:', false);
+    const sessDatesThisWeek = new Set();
+    const allSessDates = new Set();
+    let recentSessions = [];
+    if(sessListResult && sessListResult.keys){
+      for(const k of sessListResult.keys){
+        const parts = k.split(':');
+        const dt = parts[1];
+        allSessDates.add(dt);
+        if(weekSet.has(dt)) sessDatesThisWeek.add(dt);
+      }
+    }
+    document.getElementById('dashSessions').textContent = sessDatesThisWeek.size;
+
+    // cardio minutes this week
+    const cardioListResult = await window.storage.list('cardio:', false);
+    let cardioMinutes = 0;
+    const cardioDatesAll = new Set();
+    if(cardioListResult && cardioListResult.keys){
+      for(const k of cardioListResult.keys){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value){
+            const c = JSON.parse(r.value);
+            cardioDatesAll.add(c.date);
+            if(weekSet.has(c.date)) cardioMinutes += parseInt(c.duration)||0;
+          }
+        }catch(e){}
+      }
+    }
+    document.getElementById('dashCardio').textContent = cardioMinutes;
+
+    // streak: consecutive days (from today backwards) with either a session or cardio logged
+    const activeDates = new Set([...allSessDates, ...cardioDatesAll]);
+    let streak = 0;
+    for(let i=0;i<60;i++){
+      const d = new Date();
+      d.setDate(d.getDate()-i);
+      const key = d.toISOString().slice(0,10);
+      if(activeDates.has(key)) streak++;
+      else break;
+    }
+    document.getElementById('dashStreak').textContent = streak;
+
+    // weight change over last 7 days
+    const weightListResult = await window.storage.list('weight:', false);
+    let weightChangeText = '—';
+    if(weightListResult && weightListResult.keys){
+      const entries = [];
+      for(const k of weightListResult.keys){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value) entries.push(JSON.parse(r.value));
+        }catch(e){}
+      }
+      const weekEntries = entries.filter(e=>weekSet.has(e.date)).sort((a,b)=>a.date.localeCompare(b.date));
+      if(weekEntries.length>=2){
+        const diff = (weekEntries[weekEntries.length-1].kg - weekEntries[0].kg).toFixed(1);
+        weightChangeText = (diff>0?'+':'') + diff + ' kg';
+      } else if(weekEntries.length===1){
+        weightChangeText = weekEntries[0].kg + ' kg';
+      }
+    }
+    document.getElementById('dashWeight').textContent = weightChangeText;
+
+    // recent activity list (mix of sessions + cardio, last 5)
+    const recentEl = document.getElementById('dashRecent');
+    const combined = [];
+    if(sessListResult && sessListResult.keys){
+      for(const k of sessListResult.keys.slice(-15)){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value){
+            const p = JSON.parse(r.value);
+            const sets = Object.values(p.sets||{}).reduce((a,arr)=>a+arr.filter(s=>s.done).length,0);
+            combined.push({date:p.date, label: p.dayLabel + ' — ' + sets + ' sets'});
+          }
+        }catch(e){}
+      }
+    }
+    combined.sort((a,b)=>b.date.localeCompare(a.date));
+    recentEl.innerHTML = combined.slice(0,5).map(c=>`<div class="hitem"><span>${c.date}</span><span>${c.label}</span></div>`).join('') || '<div style="font-size:12px;color:var(--text-dim);">No activity yet.</div>';
+  }catch(e){}
+}
+
+let multiSelectMode = false;
+let selectedDates = new Set();
+let sessionCategoriesByDate = {}; // dateStr -> Set of category titles trained that day
+
+function renderCalendar(){
+  const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+  document.getElementById('calMonthLabel').textContent = calViewDate.toLocaleDateString('en-IN',{month:'long', year:'numeric'});
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const legendEl = document.getElementById('calLegend');
+  legendEl.innerHTML = Object.entries(CATEGORY_COLORS).map(([title,color])=>
+    `<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-dim);"><span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;"></span>${title}</span>`
+  ).join('');
+
+  ['S','M','T','W','T','F','S'].forEach(d=>{
+    const h = document.createElement('div');
+    h.className = 'calhead'; h.textContent = d;
+    grid.appendChild(h);
+  });
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const todayStr = todayKey();
+  for(let i=0;i<firstDow;i++){ grid.appendChild(document.createElement('div')); }
+  for(let d=1; d<=daysInMonth; d++){
+    const key = dateKey(y,m,d);
+    const cell = document.createElement('div');
+    cell.className = 'calday' + (key===todayStr?' today':'') + (sessionDates.has(key)?' done':'') + (selectedDates.has(key)?' selected':'');
+    const cats = sessionCategoriesByDate[key] ? Array.from(sessionCategoriesByDate[key]) : [];
+    if(cats.length===1){
+      cell.style.background = categoryColor(cats[0]) + '33'; // subtle tint
+      cell.style.borderColor = categoryColor(cats[0]);
+    } else if(cats.length>1){
+      cell.style.background = 'var(--panel2)';
+    }
+    cell.innerHTML = `<span>${d}</span>`;
+    if(cats.length>0){
+      const dotsWrap = document.createElement('div');
+      dotsWrap.style.cssText = 'display:flex;gap:2px;position:absolute;bottom:3px;';
+      cats.slice(0,4).forEach(cat=>{
+        const dot = document.createElement('span');
+        dot.style.cssText = `width:4px;height:4px;border-radius:50%;background:${categoryColor(cat)};display:inline-block;`;
+        dotsWrap.appendChild(dot);
+      });
+      cell.style.position = 'relative';
+      cell.appendChild(dotsWrap);
+    }
+    cell.addEventListener('click', ()=>{
+      if(multiSelectMode){
+        if(selectedDates.has(key)) selectedDates.delete(key); else selectedDates.add(key);
+        renderCalendar();
+        document.getElementById('downloadSelectedBtn').style.display = selectedDates.size>0 ? 'block' : 'none';
+      } else {
+        showDayDetail(key);
+      }
+    });
+    grid.appendChild(cell);
+  }
+}
+
+document.getElementById('multiSelectToggle').addEventListener('click', ()=>{
+  multiSelectMode = !multiSelectMode;
+  document.getElementById('multiSelectToggle').textContent = multiSelectMode ? 'Cancel selection' : 'Select multiple days';
+  document.getElementById('downloadSelectedBtn').style.display = (multiSelectMode && selectedDates.size>0) ? 'block' : 'none';
+  if(!multiSelectMode){ selectedDates.clear(); }
+  document.getElementById('dayDetailPanel').innerHTML = '';
+  renderCalendar();
+});
+
+// fetch everything logged for a given date: strength session(s), cardio entries, weight entry
+async function getDayData(dateStr){
+  const data = { date: dateStr, sessions: [], cardio: [], weight: null, weightKey: 'weight:' + dateStr };
+  try{
+    const sessList = await window.storage.list('session:' + dateStr + ':', false);
+    if(sessList && sessList.keys){
+      for(const k of sessList.keys){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value){
+            const parsed = JSON.parse(r.value);
+            if(parsed.hasPhoto){
+              try{
+                const dayKeyPart = k.split(':')[2];
+                const pr = await window.storage.get('photo:' + dateStr + ':' + dayKeyPart, false);
+                if(pr && pr.value) parsed.photo = pr.value;
+              }catch(e){}
+            }
+            data.sessions.push({ key:k, ...parsed });
+          }
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  try{
+    const cardioList = await window.storage.list('cardio:' + dateStr + ':', false);
+    if(cardioList && cardioList.keys){
+      for(const k of cardioList.keys){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value) data.cardio.push({ key:k, ...JSON.parse(r.value) });
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  try{
+    const wr = await window.storage.get(data.weightKey, false);
+    if(wr && wr.value) data.weight = JSON.parse(wr.value);
+  }catch(e){}
+  return data;
+}
+
+function findExerciseIcon(name){
+  const found = ALL_EXERCISES.find(e=>e.name.toLowerCase()===String(name).toLowerCase());
+  return found ? found.icon : null;
+}
+
+function formatSetLine(name, doneSets){
+  const icon = findExerciseIcon(name);
+  const target = (ALL_EXERCISES.find(e=>e.name.toLowerCase()===String(name).toLowerCase())||{}).target||'';
+  if(icon === 'cardio'){
+    return doneSets.map(x=>`${x.w||'-'} min${x.r?', '+x.r+' km':''}`).join(', ');
+  }
+  const timeUnit = /min\b/i.test(target) ? 'min' : (/sec\b/i.test(target) ? 'sec' : null);
+  if(icon === 'core' || icon === 'plank'){
+    return doneSets.map(x=>`${x.r||'-'}${timeUnit==='min'?' min':timeUnit==='sec'?' sec':' reps'}`).join(', ');
+  }
+  if(timeUnit){
+    return doneSets.map(x=>`${x.w?x.w+'kg, ':''}${x.r||'-'} ${timeUnit==='min'?'min':'sec'}`).join(', ');
+  }
+  return doneSets.map(x=>`${x.w||'-'}kg x ${x.r||'-'}`).join(', ');
+}
+
+function dayDataToHtml(data){
+  const total = totalCaloriesForDay(data);
+  let html = `<div class="detailcard"><h4>${data.date}</h4>`;
+  if(data.sessions.length===0 && data.cardio.length===0 && !data.weight){
+    html += `<div style="font-size:13px;color:var(--text-dim);">No activity logged this day.</div>`;
+  }
+  if(data.sessions.length>0 || data.cardio.length>0){
+    const gap = dailyCalorieGoal - total;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel);border-radius:6px;padding:8px 10px;margin-bottom:10px;">
+      <span style="font-size:13px;color:var(--text-dim);">Estimated burn today</span>
+      <span style="font-size:16px;font-weight:700;color:var(--brass);">${total} kcal</span>
+    </div>`;
+    if(gap>0){
+      html += `<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${gap} kcal short of your ${dailyCalorieGoal} kcal goal — roughly ${Math.round(gap/4)} more minutes of brisk walking would close the gap.</div>`;
+    } else {
+      html += `<div style="font-size:12px;color:var(--ok);margin-bottom:10px;">Goal met — ${Math.abs(gap)} kcal over your ${dailyCalorieGoal} kcal goal.</div>`;
+    }
+  }
+  data.sessions.forEach(s=>{
+    const cal = estimateStrengthCalories(s);
+    html += `<div class="detailex" style="display:flex;justify-content:space-between;align-items:center;font-weight:600;color:var(--text);border-bottom:none;padding-bottom:2px;"><span style="text-decoration:underline;text-underline-offset:4px;text-decoration-color:${categoryColor(s.dayLabel)};">${s.dayLabel}</span><span style="display:flex;align-items:center;gap:8px;font-weight:400;"><span style="color:var(--brass);">~${cal} kcal</span><span class="logDel" data-key="${s.key}" data-refresh="daydetail" title="Delete this session">✕</span></span></div>`;
+    Object.entries(s.sets||{}).forEach(([name, sets])=>{
+      const doneSets = sets.filter(x=>x.w || x.r || x.done);
+      if(doneSets.length===0) return;
+      const setStr = formatSetLine(name, doneSets);
+      html += `<div class="detailex"><b>${name}</b>: ${setStr}</div>`;
+    });
+    if(s.note){ html += `<div class="detailex" style="color:var(--text-dim);">Note: ${s.note}</div>`; }
+  });
+  data.cardio.forEach(c=>{
+    const cal = estimateCardioCalories(c);
+    html += `<div class="detailex" style="display:flex;justify-content:space-between;"><span><span style="font-weight:600;text-decoration:underline;text-underline-offset:4px;text-decoration-color:${categoryColor('Cardio & Abdomen')};">Cardio</span> — ${c.type}: ${c.duration} min${c.distance?', '+c.distance+' km':''}</span><span style="display:flex;align-items:center;gap:8px;"><span style="color:var(--brass);">~${cal} kcal</span><span class="logDel" data-key="${c.key}" data-refresh="daydetail" title="Delete this entry">✕</span></span></div>`;
+  });
+  if(data.weight){ html += `<div class="detailex" style="display:flex;justify-content:space-between;"><span><span style="font-weight:600;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--brass);">Body weight</span>: ${data.weight.kg} kg</span><span class="logDel" data-key="${data.weightKey}" data-refresh="daydetail" title="Delete this entry">✕</span></div>`; }
+  html += `</div>`;
+  return html;
+}
+
+async function showDayDetail(dateStr){
+  const panel = document.getElementById('dayDetailPanel');
+  panel.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">Loading…</div>';
+  const data = await getDayData(dateStr);
+  const isToday = dateStr === todayKey();
+  panel.innerHTML = dayDataToHtml(data)
+    + (isToday ? '' : `<button id="logForDayBtn" style="width:100%;margin-top:10px;background:var(--panel2);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">+ Log / edit workout for this day</button>`)
+    + `<button id="downloadOneBtn" style="width:100%;margin-top:8px;background:var(--brass);color:#1a1200;border:none;border-radius:4px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">Download this day as PDF</button>`
+    + `<div id="downloadOneStatus" style="text-align:center;font-size:12px;color:var(--text-dim);margin-top:4px;min-height:14px;"></div>`
+    + `<button id="aiAnalysisBtn" style="width:100%;margin-top:8px;background:var(--panel);border:1px solid var(--brass-dim);color:var(--brass);border-radius:4px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">Get AI analysis for this day</button>`
+    + `<div id="aiAnalysisResult" style="margin-top:10px;"></div>`;
+  if(!isToday){
+    document.getElementById('logForDayBtn').addEventListener('click', ()=>{
+      selectedLogDate = dateStr;
+      document.getElementById('logDateInput').value = dateStr;
+      updateLogDateUI();
+      loadTodayIfExists();
+      document.getElementById('dayTabs').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  }
+  document.getElementById('downloadOneBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('downloadOneBtn');
+    const statusEl = document.getElementById('downloadOneStatus');
+    btn.disabled = true;
+    statusEl.textContent = 'Preparing PDF with AI summary…';
+    await generatePdf([data], statusEl);
+    btn.disabled = false;
+  });
+  document.getElementById('aiAnalysisBtn').addEventListener('click', ()=>{ runAiAnalysis(data); });
+  panel.querySelectorAll('.logDel').forEach(btn=>{
+    btn.addEventListener('click', async e=>{
+      e.stopPropagation();
+      try{
+        await window.storage.delete(e.target.dataset.key, false);
+        loadHistory(); loadWeights(); loadCardio(); loadCalendarData(); loadDashboard();
+        showDayDetail(dateStr);
+      }catch(err){}
+    });
+  });
+}
+
+async function runExerciseSwap(exName, day, isMix){
+  const btn = document.querySelector(`.swapBtn[data-ex="${CSS.escape(exName)}"]`);
+  if(btn){ btn.disabled = true; btn.textContent = 'Finding alternatives…'; }
+
+  const groupTitle = isMix ? (ALL_EXERCISES.find(e=>e.name===exName)?.category || 'general fitness') : day.title;
+  const prompt = `At the gym today, the equipment for "${exName}" (part of my "${groupTitle}" workout) isn't available or is occupied.
+
+Suggest 3 alternative exercises that target the same muscles and could reasonably replace it, using different equipment (e.g. if it's a machine, suggest dumbbell/barbell/cable/bodyweight options instead).
+
+Respond with ONLY a raw JSON array, no markdown fences, no other text, in exactly this shape:
+[{"name":"Exercise Name","reason":"one short sentence — what equipment it needs and why it's a good swap"}]`;
+
+  try{
+    const response = await fetch("/.netlify/functions/claude-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 800,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const json = await response.json();
+    const text = (json.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const cleaned = text.replace(/```json|```/g, '').trim();
+    let parsed;
+    try{ parsed = JSON.parse(cleaned); }catch(e){ parsed = null; }
+    if(Array.isArray(parsed) && parsed.length){
+      cachedSwaps[exName] = parsed;
+      renderDay();
+      return;
+    }
+  }catch(err){}
+  if(btn){ btn.disabled = false; btn.textContent = '⇄ Not available? Swap'; }
+}
+
+async function runExerciseSuggestion(day){
+  const btn = document.getElementById('suggestBtn');
+  const resultEl = document.getElementById('suggestResult');
+  btn.disabled = true;
+  btn.textContent = 'Thinking…';
+  resultEl.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">Reviewing your training history…</div>';
+
+  const isMix = day.exercises.length === 0;
+  const currentList = (isMix ? getDynamicList(day.key) : day.exercises.concat(currentExtras)).map(e=>e.name).join(', ') || 'none yet';
+
+  // 1. today's completed work so far (on-screen, saved or not)
+  let todayDone = '';
+  Object.entries(currentSets||{}).forEach(([name, sets])=>{
+    const done = (sets||[]).filter(x=>x.w||x.r||x.done);
+    if(done.length>0){
+      todayDone += '- ' + name + ': ' + done.map(x=>`${x.w||'bw'}kg x ${x.r||'?'}`).join(', ') + '\n';
+    }
+  });
+  if(!todayDone) todayDone = 'Nothing completed yet today.\n';
+
+  // 2. past 14 days of history from storage: sessions + cardio
+  let history = '';
+  try{
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-14);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+
+    const sessList = await window.storage.list('session:', false);
+    if(sessList && sessList.keys){
+      const recent = sessList.keys.filter(k=>{ const d = k.split(':')[1]; return d && d >= cutoffStr; }).sort();
+      for(const k of recent){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value){
+            const p = JSON.parse(r.value);
+            const exNames = Object.entries(p.sets||{}).filter(([n,arr])=>(arr||[]).some(x=>x.w||x.r||x.done)).map(([n])=>n);
+            if(exNames.length) history += p.date + ' — ' + p.dayLabel + ': ' + exNames.join(', ') + '\n';
+          }
+        }catch(e){}
+      }
+    }
+    const cardioList = await window.storage.list('cardio:', false);
+    if(cardioList && cardioList.keys){
+      const recentC = cardioList.keys.filter(k=>{ const d = k.split(':')[1]; return d && d >= cutoffStr; }).sort();
+      for(const k of recentC){
+        try{
+          const r = await window.storage.get(k, false);
+          if(r && r.value){
+            const c = JSON.parse(r.value);
+            history += c.date + ' — Cardio: ' + c.type + ' ' + c.duration + ' min\n';
+          }
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  if(!history) history = 'No training history recorded in the last 14 days.\n';
+
+  const prompt = `I train at a regular commercial gym, 44 years old, moderate experience, currently ~${latestWeightKg}kg.
+
+Today's focus: "${day.title}". The exercises planned for this day are: ${currentList}.
+
+What I've actually completed TODAY so far:
+${todayDone}
+My training history over the last 14 days:
+${history}
+Based on all of the above, suggest 5 exercises for today. Prioritize:
+1. Muscle groups or movements I've been neglecting recently (check the history).
+2. Balance within today's session — if I've already hit certain movements hard today, suggest complements rather than repeats.
+3. Recovery awareness — avoid suggesting heavy work for muscle groups trained intensely in the last 1-2 days.
+For each, give the exercise name and one short sentence explaining WHY based on my actual data (e.g. "you haven't trained legs in 9 days" or "complements the pressing you did today").
+
+Respond with ONLY a raw JSON array, no markdown fences, no other text, in exactly this shape:
+[{"name":"Exercise Name","reason":"one short data-driven sentence"}]`;
+
+  try{
+    const response = await fetch("/.netlify/functions/claude-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const json = await response.json();
+    if(!response.ok || json.error || json.type==='error'){
+      const errMsg = (json.error && (json.error.message || JSON.stringify(json.error))) || JSON.stringify(json) || ('HTTP ' + response.status);
+      resultEl.innerHTML = `<div style="font-size:12px;color:var(--danger);">Real error (status ${response.status}): ${errMsg}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Suggest exercises for ' + day.title;
+      return;
+    }
+    const text = (json.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    const cleaned = text.replace(/```json|```/g, '').trim();
+    let parsed;
+    try{ parsed = JSON.parse(cleaned); }catch(e){ parsed = null; }
+    if(Array.isArray(parsed) && parsed.length){
+      cachedSuggestions[day.key] = parsed;
+      renderDay();
+      return;
+    } else {
+      resultEl.innerHTML = '<div style="font-size:12px;color:var(--danger);">Could not read suggestions — raw response: ' + (text||'(empty)').slice(0,200) + '</div>';
+    }
+  }catch(err){
+    resultEl.innerHTML = '<div style="font-size:12px;color:var(--danger);">Network/JS error: ' + (err && err.message ? err.message : String(err)) + '</div>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Suggest exercises for ' + day.title;
+}
+
+async function runAiAnalysis(data){
+  const resultEl = document.getElementById('aiAnalysisResult');
+  const btn = document.getElementById('aiAnalysisBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+  resultEl.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">Thinking through the session…</div>';
+  await runAiAnalysisInto(data, resultEl);
+  btn.disabled = false;
+  btn.textContent = 'Get AI analysis for this day';
+}
+
+async function runAiAnalysisInto(data, resultEl){
+  // build a plain-text summary of the day's logged activity for the model
+  let summary = 'User: 44-year-old male, height 5\'5" (165cm), body weight ~' + latestWeightKg + 'kg (may be updated by logged weight below).\n';
+  summary += 'Date: ' + data.date + '\n\n';
+  if(data.weight) summary += 'Logged body weight that day: ' + data.weight.kg + ' kg\n\n';
+
+  if(data.sessions.length===0 && data.cardio.length===0){
+    summary += 'No strength or cardio activity was logged this day (likely a rest day).\n';
+  }
+  data.sessions.forEach(s=>{
+    summary += 'Strength session: ' + s.dayLabel + '\n';
+    Object.entries(s.sets||{}).forEach(([name, sets])=>{
+      const doneSets = sets.filter(x=>x.w || x.r || x.done);
+      if(doneSets.length===0) return;
+      summary += '- ' + name + ': ' + formatSetLine(name, doneSets) + '\n';
+    });
+    if(s.note) summary += 'Note from user: ' + s.note + '\n';
+  });
+  data.cardio.forEach(c=>{
+    summary += 'Cardio: ' + c.type + ', ' + c.duration + ' minutes' + (c.distance ? ', ' + c.distance + ' km' : '') + '\n';
+  });
+
+  const appEstimate = totalCaloriesForDay(data);
+  const gap = dailyCalorieGoal - appEstimate;
+  summary += `\nApp's own rough calorie estimate for the day: ${appEstimate} kcal.\nUser's daily calorie burn goal: ${dailyCalorieGoal} kcal.\n`;
+  summary += gap>0 ? `They are ${gap} kcal short of their goal today.\n` : `They have met or exceeded their goal by ${Math.abs(gap)} kcal.\n`;
+
+  const prompt = `Here is a workout log for one day:\n\n${summary}\n\nPlease give:\n1. An estimated calorie burn range for this day's exercise (state it's an estimate, ranges are fine, briefly note the method/assumptions — you can sanity-check against the app's own estimate given above).\n2. A short 2-3 sentence synopsis of the workout quality/balance for the day.\n3. If they are short of their daily calorie goal, a concrete, practical suggestion for how to close that gap today or tomorrow (e.g. "X more minutes of Y"). If they've met it, a brief note of encouragement plus one suggestion for tomorrow.\nKeep the whole answer under 150 words, plain text, no markdown headers, friendly and direct tone.`;
+
+  try{
+    const response = await fetch("/.netlify/functions/claude-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const json = await response.json();
+    const text = (json.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    resultEl.innerHTML = `<div class="detailcard" style="white-space:pre-wrap;font-size:13px;line-height:1.5;">${text || 'No analysis returned — try again.'}</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">AI estimate — not a medical or precise calorie measurement.</div>`;
+  }catch(err){
+    resultEl.innerHTML = '<div style="font-size:12px;color:var(--danger);">Could not get analysis — check connection and try again.</div>';
+  }
+}
+
+async function downloadSelectedDays(){
+  if(selectedDates.size===0) return;
+  const btn = document.getElementById('downloadSelectedBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Preparing PDF…';
+  const dates = Array.from(selectedDates).sort();
+  const allData = [];
+  for(const d of dates){ allData.push(await getDayData(d)); }
+  await generatePdf(allData);
+  btn.disabled = false;
+  btn.textContent = originalText;
+}
+
+async function fetchAiSynopsisText(data){
+  // returns plain-text AI synopsis for a day, or null on failure
+  try{
+    let summary = 'User: 44-year-old male, ~' + latestWeightKg + 'kg.\nDate: ' + data.date + '\n';
+    if(data.weight) summary += 'Body weight logged: ' + data.weight.kg + ' kg\n';
+    data.sessions.forEach(s=>{
+      summary += 'Strength: ' + s.dayLabel + '\n';
+      Object.entries(s.sets||{}).forEach(([name, sets])=>{
+        const done = (sets||[]).filter(x=>x.w||x.r||x.done);
+        if(done.length) summary += '- ' + name + ': ' + done.map(x=>`${x.w||'bw'}kg x ${x.r||'?'}`).join(', ') + '\n';
+      });
+      if(s.note) summary += 'Note: ' + s.note + '\n';
+    });
+    data.cardio.forEach(c=>{ summary += 'Cardio: ' + c.type + ' ' + c.duration + ' min' + (c.distance?' '+c.distance+' km':'') + '\n'; });
+    summary += 'App calorie estimate: ' + totalCaloriesForDay(data) + ' kcal. Goal: ' + dailyCalorieGoal + ' kcal.\n';
+
+    const response = await fetch("/.netlify/functions/claude-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: `Workout log for one day:\n${summary}\nWrite a 3-4 sentence friendly synopsis of this day's training: quality/balance, calorie estimate vs goal, and one suggestion. Plain text only, no headers, under 90 words.` }]
+      })
+    });
+    const json = await response.json();
+    const text = (json.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(' ').trim();
+    return text || null;
+  }catch(e){ return null; }
+}
+
+async function generatePdf(dayDataList, statusEl){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageW = 210, marginX = 14, contentW = pageW - marginX*2;
+
+  // brand colors
+  const BRASS = [201,154,74];
+  const DARK = [26,28,22];
+  const GRAY = [110,110,100];
+
+  // fetch AI synopses first (max 5 days to keep it fast)
+  const synopses = {};
+  if(statusEl) statusEl.textContent = 'Preparing report with AI summary…';
+  const toAnalyze = dayDataList.slice(0,5);
+  for(const d of toAnalyze){
+    if(d.sessions.length>0 || d.cardio.length>0){
+      synopses[d.date] = await fetchAiSynopsisText(d);
+    }
+  }
+
+  dayDataList.forEach((data, idx)=>{
+    if(idx>0) doc.addPage();
+    let y = 0;
+
+    // header band
+    doc.setFillColor(DARK[0],DARK[1],DARK[2]);
+    doc.rect(0, 0, pageW, 30, 'F');
+    doc.setTextColor(BRASS[0],BRASS[1],BRASS[2]);
+    doc.setFontSize(17);
+    doc.setFont(undefined,'bold');
+    doc.text('Abhishek Agrawal', marginX, 13);
+    doc.setFontSize(9);
+    doc.setFont(undefined,'normal');
+    doc.setTextColor(200,200,190);
+    doc.text('DAILY WORK-OUT LOG', marginX, 20);
+    doc.setFontSize(12);
+    doc.setTextColor(255,255,255);
+    doc.text(data.date, pageW - marginX, 16, {align:'right'});
+    y = 40;
+
+    if(data.sessions.length===0 && data.cardio.length===0 && !data.weight){
+      doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+      doc.setFontSize(11);
+      doc.text('No activity logged this day.', marginX, y);
+      return;
+    }
+
+    // calorie summary box
+    const totalCal = totalCaloriesForDay(data);
+    const gap = dailyCalorieGoal - totalCal;
+    doc.setFillColor(245,240,230);
+    doc.roundedRect(marginX, y-6, contentW, 18, 2, 2, 'F');
+    doc.setTextColor(DARK[0],DARK[1],DARK[2]);
+    doc.setFontSize(10);
+    doc.text('Estimated calorie burn', marginX+5, y+1);
+    doc.setFont(undefined,'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(BRASS[0]-40,BRASS[1]-50,BRASS[2]-30);
+    doc.text(totalCal + ' kcal', marginX+5, y+8);
+    doc.setFont(undefined,'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+    const goalMsg = gap>0 ? (gap + ' kcal short of ' + dailyCalorieGoal + ' goal') : ('Goal met (+' + Math.abs(gap) + ' kcal)');
+    doc.text(goalMsg, pageW - marginX - 5, y+5, {align:'right'});
+    y += 22;
+
+    const checkPage = (needed)=>{ if(y+needed > 280){ doc.addPage(); y = 20; } };
+
+    // strength sessions
+    data.sessions.forEach(s=>{
+      checkPage(20);
+      const cal = estimateStrengthCalories(s);
+      doc.setFontSize(13);
+      doc.setFont(undefined,'bold');
+      doc.setTextColor(DARK[0],DARK[1],DARK[2]);
+      doc.text(s.dayLabel, marginX, y);
+      // underline accent
+      const w = doc.getTextWidth(s.dayLabel);
+      doc.setDrawColor(BRASS[0],BRASS[1],BRASS[2]);
+      doc.setLineWidth(0.7);
+      doc.line(marginX, y+1.5, marginX+w, y+1.5);
+      doc.setFont(undefined,'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(BRASS[0]-40,BRASS[1]-50,BRASS[2]-30);
+      doc.text('~' + cal + ' kcal', pageW - marginX, y, {align:'right'});
+      y += 8;
+
+      doc.setTextColor(60,60,55);
+      Object.entries(s.sets||{}).forEach(([name, sets])=>{
+        const doneSets = sets.filter(x=>x.w || x.r || x.done);
+        if(doneSets.length===0) return;
+        checkPage(8);
+        const setStr = formatSetLine(name, doneSets).replace(/, /g, ',  ');
+        doc.setFont(undefined,'bold');
+        doc.setFontSize(10);
+        doc.text(name, marginX+2, y);
+        doc.setFont(undefined,'normal');
+        const nameW = doc.getTextWidth(name);
+        const wrapped = doc.splitTextToSize(setStr, contentW - nameW - 10);
+        doc.text(wrapped, marginX+2+nameW+4, y);
+        y += 6*wrapped.length;
+      });
+
+      if(s.note){
+        checkPage(10);
+        doc.setFont(undefined,'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+        const noteWrapped = doc.splitTextToSize('Note: ' + s.note, contentW-4);
+        doc.text(noteWrapped, marginX+2, y);
+        doc.setFont(undefined,'normal');
+        y += 5.5*noteWrapped.length;
+      }
+      y += 6;
+
+      // embedded progress photo if present
+      if(s.photo){
+        try{
+          checkPage(75);
+          doc.addImage(s.photo, 'JPEG', marginX, y, 60, 60, undefined, 'FAST');
+          doc.setFontSize(8.5);
+          doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+          doc.text('Progress photo', marginX, y+66);
+          y += 72;
+        }catch(e){ /* unsupported format — skip photo */ }
+      }
+    });
+
+    // cardio
+    if(data.cardio.length>0){
+      checkPage(16);
+      doc.setFontSize(13);
+      doc.setFont(undefined,'bold');
+      doc.setTextColor(DARK[0],DARK[1],DARK[2]);
+      doc.text('Cardio', marginX, y);
+      const cw = doc.getTextWidth('Cardio');
+      doc.setDrawColor(BRASS[0],BRASS[1],BRASS[2]);
+      doc.setLineWidth(0.7);
+      doc.line(marginX, y+1.5, marginX+cw, y+1.5);
+      doc.setFont(undefined,'normal');
+      y += 8;
+      doc.setFontSize(10);
+      doc.setTextColor(60,60,55);
+      data.cardio.forEach(c=>{
+        checkPage(8);
+        const cal = estimateCardioCalories(c);
+        doc.text(`${c.type}: ${c.duration} min${c.distance?', '+c.distance+' km':''}`, marginX+2, y);
+        doc.setTextColor(BRASS[0]-40,BRASS[1]-50,BRASS[2]-30);
+        doc.text('~' + cal + ' kcal', pageW - marginX, y, {align:'right'});
+        doc.setTextColor(60,60,55);
+        y += 6;
+      });
+      y += 4;
+    }
+
+    // body weight
+    if(data.weight){
+      checkPage(10);
+      doc.setFontSize(10);
+      doc.setFont(undefined,'bold');
+      doc.setTextColor(DARK[0],DARK[1],DARK[2]);
+      doc.text('Body weight: ', marginX, y);
+      doc.setFont(undefined,'normal');
+      doc.text(data.weight.kg + ' kg', marginX + doc.getTextWidth('Body weight: ') + 2, y);
+      y += 10;
+    }
+
+    // AI synopsis box
+    const syn = synopses[data.date];
+    if(syn){
+      const synWrapped = doc.splitTextToSize(syn, contentW - 10);
+      const boxH = 14 + synWrapped.length*5;
+      checkPage(boxH + 6);
+      doc.setFillColor(240,236,224);
+      doc.roundedRect(marginX, y-4, contentW, boxH, 2, 2, 'F');
+      doc.setFontSize(10);
+      doc.setFont(undefined,'bold');
+      doc.setTextColor(BRASS[0]-40,BRASS[1]-50,BRASS[2]-30);
+      doc.text('AI Synopsis', marginX+5, y+2);
+      doc.setFont(undefined,'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60,60,55);
+      doc.text(synWrapped, marginX+5, y+8);
+      y += boxH + 4;
+      doc.setFontSize(7.5);
+      doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+      doc.text('AI estimate — not a medical or precise calorie measurement.', marginX, y);
+      y += 6;
+    }
+
+    // footer
+    doc.setFontSize(8);
+    doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+    doc.text('Generated by Abhishek Agrawal Daily Work-Out Log', pageW/2, 292, {align:'center'});
+  });
+
+  const fname = dayDataList.length===1 ? 'abhishek-workout-log-' + dayDataList[0].date + '.pdf' : 'abhishek-workout-log-' + dayDataList.length + '-days.pdf';
+  doc.save(fname);
+  if(statusEl) statusEl.textContent = '';
+}
+
+document.getElementById('downloadSelectedBtn').addEventListener('click', downloadSelectedDays);
+
+document.getElementById('aiTodayBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('aiTodayBtn');
+  const resultEl = document.getElementById('aiTodayResult');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+  resultEl.innerHTML = '<div style="font-size:12px;color:var(--text-dim);">Thinking through today\'s session…</div>';
+  try{
+    const data = await getDayData(todayKey());
+    // also fold in whatever is currently on-screen but not yet saved
+    if(Object.keys(currentSets).length>0){
+      const liveLabel = PLAN.find(d=>d.key===currentDay).title;
+      const alreadyIncluded = data.sessions.find(s=>s.dayLabel===liveLabel);
+      if(!alreadyIncluded){
+        data.sessions.push({dayLabel: liveLabel + ' (unsaved)', sets: currentSets, note: currentNotes});
+      }
+    }
+    await runAiAnalysisInto(data, resultEl);
+  }catch(e){
+    resultEl.innerHTML = '<div style="font-size:12px;color:var(--danger);">Could not get analysis — try again.</div>';
+  }
+  btn.disabled = false;
+  btn.textContent = "Get today's AI synopsis";
+});
+
+document.getElementById('downloadTodayBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('downloadTodayBtn');
+  const statusEl = document.getElementById('downloadTodayStatus');
+  btn.disabled = true;
+  statusEl.textContent = 'Preparing PDF with AI summary…';
+  try{
+    const data = await getDayData(todayKey());
+    // fold in whatever is currently on-screen but not yet saved, same as the AI synopsis button
+    if(Object.keys(currentSets).length>0){
+      const liveLabel = PLAN.find(d=>d.key===currentDay).title;
+      const alreadyIncluded = data.sessions.find(s=>s.dayLabel===liveLabel);
+      if(!alreadyIncluded){
+        data.sessions.push({dayLabel: liveLabel + ' (unsaved)', sets: currentSets, note: currentNotes, photo: currentPhoto});
+      }
+    }
+    await generatePdf([data], statusEl);
+  }catch(e){
+    statusEl.textContent = 'Could not generate PDF — try again.';
+    setTimeout(()=>{ statusEl.textContent=''; }, 4000);
+  }
+  btn.disabled = false;
+});
+
+document.getElementById('pdfFromDate').max = todayKey();
+document.getElementById('pdfToDate').max = todayKey();
+
+document.getElementById('pdfRangeDownloadBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('pdfRangeDownloadBtn');
+  const statusEl = document.getElementById('pdfRangeStatus');
+  const fromVal = document.getElementById('pdfFromDate').value;
+  const toVal = document.getElementById('pdfToDate').value;
+  if(!fromVal){
+    statusEl.textContent = 'Pick a date first.';
+    setTimeout(()=>{ statusEl.textContent=''; }, 2500);
+    return;
+  }
+  const start = fromVal;
+  const end = toVal || fromVal;
+  if(start > end){
+    statusEl.textContent = '"From" date must be before "To" date.';
+    setTimeout(()=>{ statusEl.textContent=''; }, 3000);
+    return;
+  }
+  // build the list of dates in range
+  const dates = [];
+  let d = new Date(start);
+  const endD = new Date(end);
+  while(d <= endD){
+    dates.push(d.toISOString().slice(0,10));
+    d.setDate(d.getDate()+1);
+  }
+  if(dates.length > 31){
+    statusEl.textContent = 'Please pick a range of 31 days or fewer.';
+    setTimeout(()=>{ statusEl.textContent=''; }, 3500);
+    return;
+  }
+  btn.disabled = true;
+  statusEl.textContent = dates.length===1 ? 'Preparing PDF with AI summary…' : `Preparing PDF for ${dates.length} days…`;
+  try{
+    const allData = [];
+    for(const dt of dates){ allData.push(await getDayData(dt)); }
+    await generatePdf(allData, statusEl);
+  }catch(e){
+    statusEl.textContent = 'Could not generate PDF — try again.';
+    setTimeout(()=>{ statusEl.textContent=''; }, 4000);
+  }
+  btn.disabled = false;
+});
+
+// ---------- calendar ----------
+async function loadCalendarData(){
+  try{
+    const listResult = await window.storage.list('session:', false);
+    sessionDates = new Set();
+    sessionCategoriesByDate = {};
+    if(listResult && listResult.keys){
+      listResult.keys.forEach(k=>{
+        const parts = k.split(':'); // session:YYYY-MM-DD:dayKey
+        const dateStr = parts[1], dayKey = parts[2];
+        if(dateStr){
+          sessionDates.add(dateStr);
+          const planEntry = PLAN.find(p=>p.key===dayKey);
+          if(planEntry){
+            if(!sessionCategoriesByDate[dateStr]) sessionCategoriesByDate[dateStr] = new Set();
+            sessionCategoriesByDate[dateStr].add(planEntry.title);
+          }
+        }
+      });
+    }
+  }catch(e){}
+  renderCalendar();
+}
+
+document.getElementById('calPrev').addEventListener('click', ()=>{ calViewDate.setMonth(calViewDate.getMonth()-1); renderCalendar(); });
+document.getElementById('calNext').addEventListener('click', ()=>{ calViewDate.setMonth(calViewDate.getMonth()+1); renderCalendar(); });
+
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'});
+document.getElementById('saveBtn').addEventListener('click', saveSession);
+document.getElementById('weightSaveBtn').addEventListener('click', saveWeight);
+document.getElementById('cardioSaveBtn').addEventListener('click', saveCardio);
+
+document.getElementById('dayNotes').addEventListener('input', e=>{
+  currentNotes = e.target.value;
+});
+
+document.getElementById('photoInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const wrap = document.getElementById('photoPreviewWrap');
+  const preview = document.getElementById('photoPreview');
+  try{
+    // createImageBitmap with imageOrientation:'from-image' respects the phone's EXIF rotation tag,
+    // which fixes photos coming out sideways — and downscaling here keeps the saved size small
+    // enough to avoid hitting browser storage limits.
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const maxDim = 1000;
+    let w = bitmap.width, h = bitmap.height;
+    if(w > maxDim || h > maxDim){
+      if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+      else { w = Math.round(w * maxDim / h); h = maxDim; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+    currentPhoto = dataUrl;
+    preview.src = currentPhoto;
+    wrap.style.display = 'block';
+  }catch(err){
+    alert('Could not process that photo — please try a different one.');
+    e.target.value = '';
+  }
+});
+
+document.getElementById('photoRemoveBtn').addEventListener('click', ()=>{
+  resetPhotoUI();
+});
+
+// ---------- backfill: log a workout for a past day you forgot ----------
+function updateLogDateUI(){
+  const isToday = selectedLogDate === todayKey();
+  const saveBtn = document.getElementById('saveBtn');
+  const banner = document.getElementById('pastDateBanner');
+  const backBtn = document.getElementById('backToTodayBtn');
+  if(isToday){
+    saveBtn.textContent = "SAVE TODAY'S SESSION";
+    banner.style.display = 'none';
+    backBtn.style.display = 'none';
+  } else {
+    const d = new Date(selectedLogDate);
+    const label = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    saveBtn.textContent = 'SAVE SESSION FOR ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}).toUpperCase();
+    banner.textContent = 'Logging a backfilled workout for ' + label + ' — this will NOT affect today\'s log.';
+    banner.style.display = 'block';
+    backBtn.style.display = 'inline-block';
+  }
+}
+
+document.getElementById('logDateInput').max = todayKey();
+document.getElementById('logDateInput').value = todayKey();
+document.getElementById('logDateInput').addEventListener('change', e=>{
+  const val = e.target.value;
+  if(!val) return;
+  selectedLogDate = val;
+  updateLogDateUI();
+  loadTodayIfExists();
+});
+document.getElementById('backToTodayBtn').addEventListener('click', ()=>{
+  selectedLogDate = todayKey();
+  document.getElementById('logDateInput').value = selectedLogDate;
+  updateLogDateUI();
+  loadTodayIfExists();
+});
+
+async function loadCalorieGoal(){
+  try{
+    const r = await window.storage.get('calorieGoal', false);
+    if(r && r.value){ dailyCalorieGoal = parseInt(r.value) || 400; }
+  }catch(e){}
+  document.getElementById('calorieGoalInput').value = dailyCalorieGoal;
+}
+
+document.getElementById('calorieGoalSaveBtn').addEventListener('click', async ()=>{
+  const val = parseInt(document.getElementById('calorieGoalInput').value);
+  if(!val || val<=0) return;
+  dailyCalorieGoal = val;
+  try{ await window.storage.set('calorieGoal', String(val), false); }catch(e){}
+  loadTodaySummary();
+});
+
+(async function init(){
+  await loadCustomCategories();
+  renderTabs();
+  renderDay();
+  await loadWeights();
+  await loadCalorieGoal();
+  loadTodayIfExists();
+  loadHistory();
+  loadCardio();
+  loadCalendarData();
+  loadDashboard();
+  loadTodaySummary();
+})();
+</script>
+</body>
+</html>
